@@ -25,7 +25,7 @@ class ZanaatsAlOrchestrator:
         self.strategy_model = genai.GenerativeModel('gemini-2.5-flash')
         self.market_agent = MarketResearchAgent()
     
-    def run_full_analysis(self, image_path: str) -> Dict:
+    async def run_full_analysis_async(self, image_path: str) -> Dict:
         """
         Tam otonom analiz akışı:
         1. Vision analizi
@@ -40,19 +40,23 @@ class ZanaatsAlOrchestrator:
             print("📸 Adım 1: Ürün Vision Analizi")
             vision_result = self._run_vision_analysis(image_path)
             if not vision_result:
-                return {'error': 'Vision analizi başarısız'}
+                return {'error': 'Vision analizi başarısız', 'success': False}
             
-            # Adım 2: Pazar Araştırması
+            # Adım 2: Pazar Araştırması (Fallback ile)
             print("\n🔍 Adım 2: Pazar Araştırması")
             market_result = self._run_market_research(vision_result['anahtar_kelimeler'])
-            if not market_result:
-                return {'error': 'Pazar araştırması başarısız'}
+            
+            # Pazar verisi bulunamazsa fallback strateji
+            if not market_result or market_result.get('total_results', 0) == 0:
+                print("⚠️ Pazar verisi bulunamadı, genel strateji ile devam ediliyor...")
+                market_result = self._generate_fallback_market_data(vision_result)
             
             # Adım 3: Strateji Üretimi
             print("\n🧠 Adım 3: E-İhracat ve Satış Stratejisi Üretimi")
             strategy_result = self._generate_export_strategy(vision_result, market_result)
             if not strategy_result:
-                return {'error': 'Strateji üretimi başarısız'}
+                # Strateji üretimi başarısız olursa basit fallback
+                strategy_result = self._generate_fallback_strategy(vision_result)
             
             # Nihai Rapor
             final_report = {
@@ -60,7 +64,8 @@ class ZanaatsAlOrchestrator:
                 'product_vision': vision_result,
                 'market_research': market_result,
                 'export_strategy': strategy_result,
-                'success': True
+                'success': True,
+                'warnings': [] if market_result else ['Pazar verisi bulunamadı, genel strateji kullanıldı']
             }
             
             print("\n🎯 Tam Otonom Analiz Tamamlandı!")
@@ -70,7 +75,8 @@ class ZanaatsAlOrchestrator:
             print(f"❌ Analiz hatası: {str(e)}")
             return {
                 'error': f'Analiz sırasında hata oluştu: {str(e)}',
-                'success': False
+                'success': False,
+                'fallback_used': True
             }
     
     def _run_vision_analysis(self, image_path: str) -> Optional[Dict]:
@@ -202,6 +208,73 @@ class ZanaatsAlOrchestrator:
         """
         
         return prompt
+    
+    def _generate_fallback_market_data(self, vision_data: Dict) -> Dict:
+        """
+        Pazar verisi bulunamazsa genel fallback verileri üretir
+        """
+        return {
+            'keywords_analyzed': vision_data.get('anahtar_kelimeler', []),
+            'etsy_results': {'total_found': 0, 'top_products': []},
+            'amazon_results': {'total_found': 0, 'top_products': []},
+            'price_analysis': {
+                'average_price': 15.0,
+                'min_price': 8.0,
+                'max_price': 25.0,
+                'price_range': 17.0,
+                'total_products_analyzed': 0,
+                'note': 'Genel pazar tahmini kullanıldı'
+            },
+            'customer_insights': {
+                'total_reviews_analyzed': 0,
+                'sentiment_analysis': {
+                    'positive_percentage': 70.0,
+                    'negative_percentage': 10.0,
+                    'neutral_percentage': 20.0
+                },
+                'sample_reviews': [],
+                'key_insights': ['Yeterli veri bulunamadı, genel varsayımlar kullanıldı']
+            },
+            'research_timestamp': self._get_timestamp(),
+            'fallback_used': True
+        }
+    
+    def _generate_fallback_strategy(self, vision_data: Dict) -> Dict:
+        """
+        Strateji üretimi başarısız olursa basit fallback strateji
+        """
+        return {
+            'urun_degerlendirmesi': {
+                'benzersiz_deger_oneri': vision_data.get('stil', 'Modern') + ' tasarım',
+                'farklasilma_stratejisi': 'Kalite ve estetik odaklı',
+                'hedef_pazar_segmenti': vision_data.get('hedef_kitle', 'Genel kullanıcılar')
+            },
+            'fiyatlandirma_stratejisi': {
+                'onerilen_fiyat_araligi': '10-25 USD',
+                'fiyatlandirma_mantigi': 'Mid-range',
+                'psikolojik_fiyatlandirma': '14.99, 19.99, 24.99'
+            },
+            'pazarlama_ve_icerik': {
+                'ana_mesajlar': [
+                    f"{vision_data.get('kategori', 'Ürün')} için kaliteli çözüm",
+                    "Modern ve şık tasarım",
+                    "Uygun fiyat, yüksek kalite"
+                ],
+                'seo_stratejisi': 'Anahtar kelime optimizasyonu yapılacak',
+                'icerik_turleri': ['Görsel', 'Video', 'Açıklama']
+            },
+            'platform_stratejisi': {
+                'oncelikli_platformlar': ['Etsy', 'Amazon', 'Instagram'],
+                'platform_ozel_stratejiler': 'Her platform için özel yaklaşım',
+                'cross_promotion': 'Platformlar arası entegrasyon'
+            },
+            'ihracat_odakli_oneriler': {
+                'ulke_odaklari': ['ABD', 'Almanya', 'UK'],
+                'kulturel_uyarlama': 'Yerel dil ve kültürel uyarlama',
+                'lojistik_onerileri': 'Uluslararası kargo çözümleri'
+            },
+            'fallback_used': True
+        }
     
     def _get_timestamp(self) -> str:
         """
