@@ -1,83 +1,63 @@
 # =========================
-# FLUTTER & DART IGNORES
+# GLOBAL IGNORES
 # =========================
-# Miscellaneous
 *.class
 *.log
-*.pyc
 *.swp
 .DS_Store
-.atom/
-.build/
-.buildlog/
 .history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
+.vscode/
 .idea/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# =========================
-# PYTHON & BACKEND IGNORES
-# =========================
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[codz]
-*$py.class
-*.so
-.Python
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Environments
+# Environments & Secrets
 .env
-.envrc
+.env.local
 .venv
 env/
 venv/
 ENV/
-env.bak/
-venv.bak/
+*.pem
 
-# Visual Studio Code
-.vscode/
-tempCodeRunnerFile.py
+# =========================
+# BACKEND (PYTHON / FASTAPI)
+# =========================
+backend/__pycache__/
+backend/*.py[codz]
+backend/*$py.class
+backend/*.so
+backend/.Python
+backend/dist/
+backend/build/
+backend/*.egg-info/
+backend/.pytest_cache/
+
+# =========================
+# FRONTEND (FLUTTER / DART)
+# =========================
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.pub-cache/
+frontend/.pub/
+frontend/build/
+frontend/coverage/
+
+# Android Studio will place build artifacts here
+frontend/android/app/debug
+frontend/android/app/profile
+frontend/android/app/release
+
+# iOS
+frontend/ios/Flutter/.last_build_id
+frontend/ios/Flutter/App.framework
+frontend/ios/Flutter/Flutter.framework
+frontend/ios/Flutter/Flutter.podspec
+frontend/ios/Flutter/Generated.xcconfig
+frontend/ios/Flutter/app.flx
+frontend/ios/Flutter/app.zip
+frontend/ios/Flutter/flutter_assets/
+frontend/ios/Flutter/flutter_export_environment.sh
+frontend/ios/Pods/
+
+# Web
+frontend/web/build/
