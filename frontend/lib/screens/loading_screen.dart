@@ -21,9 +21,9 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Timer? _textTimer;
 
   final List<String> _loadingTexts = [
-    'AI Görseli Analiz Ediyor...',
-    'Etsy ve Amazon Rakipleri Taranıyor...',
-    'Optimum Fiyat ve Strateji Belirleniyor...',
+    'Görsel analiz ediliyor (Gemini 1.5 Flash)...',
+    'Küresel pazarlar taranıyor (Etsy & Amazon)...',
+    'İhracat stratejisi sentezleniyor...',
   ];
 
   @override
