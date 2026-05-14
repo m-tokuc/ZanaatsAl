@@ -7,11 +7,7 @@ class ResultScreen extends StatelessWidget {
   final Map<String, dynamic> data;
   final File imageFile;
 
-  const ResultScreen({
-    super.key,
-    required this.data,
-    required this.imageFile,
-  });
+  const ResultScreen({super.key, required this.data, required this.imageFile});
 
   void _copyToClipboard(BuildContext context, String text) {
     Clipboard.setData(ClipboardData(text: text));
@@ -76,9 +72,9 @@ class ResultScreen extends StatelessWidget {
                 },
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Fiyat Kartı
             Container(
               width: double.infinity,
@@ -122,7 +118,8 @@ class ResultScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          data['fiyat'] ?? 'Belirlenemedi',
+                          data['export_strategy']['suggested_price'] ??
+                              'Belirlenemedi',
                           style: GoogleFonts.poppins(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -135,9 +132,9 @@ class ResultScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Başlık Kartı
             Container(
               width: double.infinity,
@@ -184,7 +181,8 @@ class ResultScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                data['baslik'] ?? 'Belirlenemedi',
+                                data['export_strategy']['suggested_title'] ??
+                                    'Belirlenemedi',
                                 style: GoogleFonts.poppins(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -211,9 +209,9 @@ class ResultScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Açıklama Kartı
             Container(
               width: double.infinity,
@@ -262,7 +260,8 @@ class ResultScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                data['aciklama'] ?? 'Belirlenemedi',
+                                data['export_strategy']['marketing_hook'] ??
+                                    'Belirlenemedi',
                                 style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   color: Colors.white,
@@ -278,7 +277,7 @@ class ResultScreen extends StatelessWidget {
                               ),
                               onPressed: () => _copyToClipboard(
                                 context,
-                                data['aciklama'] ?? '',
+                                data['export_strategy']['marketing_hook'] ?? '',
                               ),
                             ),
                           ],
@@ -289,9 +288,9 @@ class ResultScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Rakip Analizi Kartı (Ajan Etkisi)
             Container(
               width: double.infinity,
@@ -354,9 +353,9 @@ class ResultScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Yeni Ürün Analiz Et Butonu
             Container(
               width: double.infinity,
@@ -393,7 +392,7 @@ class ResultScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 20),
           ],
         ),

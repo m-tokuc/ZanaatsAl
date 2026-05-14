@@ -43,7 +43,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   Future<void> _analyzeProduct() async {
     try {
-      final result = await _apiService.analyzeProduct(widget.imageFile);
+      final result = await ApiService.analyzeProduct(widget.imageFile);
 
       // Timer'ı iptal et
       _textTimer?.cancel();
