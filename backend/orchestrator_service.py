@@ -25,7 +25,7 @@ class ZanaatsAlOrchestrator:
         self.strategy_model = genai.GenerativeModel('gemini-2.5-flash')
         self.market_agent = MarketResearchAgent()
     
-    async def run_full_analysis_async(self, image_path: str) -> Dict:
+    async def run_full_analysis_async(self, image_path: str, description: Optional[str] = None) -> Dict:
         """
         Tam otonom analiz akışı:
         1. Vision analizi
@@ -53,7 +53,7 @@ class ZanaatsAlOrchestrator:
             
             # Adım 3: Strateji Üretimi
             print("\n🧠 Adım 3: E-İhracat ve Satış Stratejisi Üretimi")
-            strategy_result = self._generate_export_strategy(vision_result, market_result)
+            strategy_result = self._generate_export_strategy(vision_result, market_result, description)
             if not strategy_result:
                 # Strateji üretimi başarısız olursa basit fallback
                 strategy_result = self._generate_fallback_strategy(vision_result)
@@ -102,13 +102,13 @@ class ZanaatsAlOrchestrator:
             print(f"❌ Pazar araştırması hatası: {str(e)}")
             return None
     
-    def _generate_export_strategy(self, vision_data: Dict, market_data: Dict) -> Optional[Dict]:
+    def _generate_export_strategy(self, vision_data: Dict, market_data: Dict, description: Optional[str] = None) -> Optional[Dict]:
         """
         Vision ve pazar verilerine dayalı E-ihracat stratejisi üretir
         """
         try:
             # Strateji prompt'u oluştur
-            strategy_prompt = self._create_strategy_prompt(vision_data, market_data)
+            strategy_prompt = self._create_strategy_prompt(vision_data, market_data, description)
             
             print("📝 Strateji analizi yapılıyor...")
             
@@ -139,7 +139,7 @@ class ZanaatsAlOrchestrator:
             print(f"❌ Strateji üretimi hatası: {str(e)}")
             return None
     
-    def _create_strategy_prompt(self, vision_data: Dict, market_data: Dict) -> str:
+    def _create_strategy_prompt(self, vision_data: Dict, market_data: Dict, description: Optional[str] = None) -> str:
         """
         Strateji üretimi için Gemini prompt'u oluşturur
         """
@@ -153,6 +153,7 @@ class ZanaatsAlOrchestrator:
         Hedef Kitle: {vision_data.get('hedef_kitle', 'N/A')}
         Anahtar Kelimeler: {', '.join(vision_data.get('anahtar_kelimeler', []))}
         Fiyat Aralığı: {vision_data.get('fiyat_araligi', 'N/A')}
+        Satıcı/Kullanıcı Açıklaması: {description if description else 'Belirtilmedi'}
         
         === PAZAR ARAŞTIRMASI ===
         Etsy Sonuçları: {market_data.get('etsy_results', {}).get('total_found', 0)} ürün bulundu

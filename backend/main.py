@@ -1,4 +1,5 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from typing import Optional
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
@@ -40,8 +41,8 @@ except Exception as e:
 
 @app.get("/")
 async def root():
-    """API ana sayfası - endpoint dokümantasyonu"""
-    return APIResponse.success(ENDPOINT_DOCS, "ZanaatsAl API'ye hoş geldiniz!")
+    """API ana sayfası"""
+    return { 'status': 'ZanaatsAl API Aktif', 'version': '1.0' }
 
 @app.get("/health")
 async def health_check():
@@ -54,7 +55,11 @@ async def health_check():
         raise HTTPException(status_code=500, detail="Health check failed")
 
 @app.post("/analyze")
-async def analyze_product(file: UploadFile = File(...)):
+async def analyze_product(
+    file: UploadFile = File(...),
+    mock: Optional[str] = None,
+    description: Optional[str] = Form(None)
+):
     """
     Ürün görselini analiz eder ve tam e-ihracat stratejisi üretir
     
@@ -69,27 +74,59 @@ async def analyze_product(file: UploadFile = File(...)):
     - Pazar verisi yok → Vision verisiyle strateji
     - API hatası → Detaylı hata mesajı
     """
+    # Mock Kontrolü (Sunum sırasında internet/API çökmesine karşı)
+    if mock and mock.lower() == 'true':
+        logger.info("Mock analysis triggered")
+        return JSONResponse(
+            status_code=200,
+            content={
+                'success': True,
+                'message': 'Mock analiz başarılı.',
+                'data': {
+                    "baslik": "El Yapımı Seramik Vazo (Mock)",
+                    "export_strategy": {
+                        "suggested_title": "Handmade Ceramic Vase - Artisan Home Decor",
+                        "suggested_price": "$34.99",
+                        "marketing_hook": "Elevate your living space with this beautifully handcrafted ceramic vase. Minimalist design meets artisan craftsmanship."
+                    },
+                    "rakip_analizi": "Rakipler Etsy'de benzer el yapımı vazoları 25-45$ bandında satmaktadır. Bu ürünün özgün tasarımı sayesinde premium bir fiyatlandırma ile rekabet avantajı sağlanabilir."
+                }
+            }
+        )
+
     # Servis kontrolü
     if not orchestrator:
         logger.error("Orchestrator service not ready")
-        raise HTTPException(
-            status_code=503, 
-            detail="Orkestratör servisi hazır değil. Lütfen daha sonra tekrar deneyin."
+        return JSONResponse(
+            status_code=200,
+            content={
+                'success': False,
+                'message': 'Analiz sırasında teknik bir aksaklık oluştu: Orkestratör servisi hazır değil.',
+                'data': None
+            }
         )
     
     # Dosya validasyonu
     if not file.content_type.startswith('image/'):
         logger.warning(f"Invalid file type: {file.content_type}")
-        raise HTTPException(
-            status_code=400, 
-            detail="Lütfen geçerli bir resim dosyası yükleyin (JPG, PNG, WebP)"
+        return JSONResponse(
+            status_code=200,
+            content={
+                'success': False,
+                'message': 'Analiz sırasında teknik bir aksaklık oluştu: Lütfen geçerli bir resim dosyası yükleyin (JPG, PNG, WebP).',
+                'data': None
+            }
         )
     
     # Dosya boyutu kontrolü (max 10MB)
     if file.size and file.size > 10 * 1024 * 1024:
-        raise HTTPException(
-            status_code=413, 
-            detail="Dosya boyutu çok büyük. Lütfen 10MB'dan küçük bir resim yükleyin."
+        return JSONResponse(
+            status_code=200,
+            content={
+                'success': False,
+                'message': "Analiz sırasında teknik bir aksaklık oluştu: Dosya boyutu çok büyük. Lütfen 10MB'dan küçük bir resim yükleyin.",
+                'data': None
+            }
         )
     
     temp_file_path = None
@@ -105,7 +142,7 @@ async def analyze_product(file: UploadFile = File(...)):
             temp_file_path = temp_file.name
         
         # Tam otonom analizi çalıştır
-        result = await orchestrator.run_full_analysis_async(temp_file_path)
+        result = await orchestrator.run_full_analysis_async(temp_file_path, description=description)
         
         if result.get('success', False):
             logger.info("Analysis completed successfully")
@@ -121,25 +158,23 @@ async def analyze_product(file: UploadFile = File(...)):
             logger.error(f"Analysis failed: {error_msg}")
             
             return JSONResponse(
-                status_code=500,
-                content=APIResponse.error(
-                    message=f"Analiz sırasında hata oluştu: {error_msg}",
-                    error_code="ANALYSIS_FAILED"
-                ).dict()
+                status_code=200,
+                content={
+                    'success': False,
+                    'message': f"Analiz sırasında teknik bir aksaklık oluştu: {error_msg}",
+                    'data': None
+                }
             )
-    
-    except HTTPException:
-        # HTTP hatalarını yeniden fırlat
-        raise
     
     except Exception as e:
         logger.error(f"Unexpected error in analyze_product: {str(e)}")
         return JSONResponse(
-            status_code=500,
-            content=APIResponse.error(
-                message="Beklenmedik bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
-                error_code="INTERNAL_ERROR"
-            ).dict()
+            status_code=200,
+            content={
+                'success': False,
+                'message': f"Analiz sırasında teknik bir aksaklık oluştu: {str(e)}",
+                'data': None
+            }
         )
     
     finally:

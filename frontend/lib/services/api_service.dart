@@ -1,13 +1,14 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class ApiService {
   // Muhammet'in gönderdiği gerçek Ngrok linki
   static const String apiUrl =
       'https://contemptibly-septemviral-apollo.ngrok-free.dev/analyze';
 
-  static Future<Map<String, dynamic>> analyzeProduct(File imageFile) async {
+  static Future<Map<String, dynamic>> analyzeProduct(XFile imageFile, {String? description}) async {
     try {
       // POST isteği ve Multipart formatı oluşturuluyor
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
@@ -19,9 +20,22 @@ class ApiService {
             'true', // Ngrok uyarı sayfasını atlamak için şart!
       });
 
+      // Varsa ürün açıklamasını ekle
+      if (description != null && description.isNotEmpty) {
+        request.fields['description'] = description;
+      }
+
+      // Fotoğrafı byte olarak oku
+      final bytes = await imageFile.readAsBytes();
+
       // Fotoğrafı 'file' anahtarıyla (key) ekliyoruz
       request.files.add(
-        await http.MultipartFile.fromPath('file', imageFile.path),
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: imageFile.name.isNotEmpty ? imageFile.name : 'image.jpeg',
+          contentType: MediaType('image', 'jpeg'),
+        ),
       );
 
       // İsteği gönder ve cevabı bekle

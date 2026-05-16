@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,132 +14,226 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ImagePicker _picker = ImagePicker();
+  final TextEditingController _descriptionController = TextEditingController();
+  XFile? _selectedImage;
 
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
-    
     if (image != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LoadingScreen(imageFile: File(image.path)),
+      setState(() {
+        _selectedImage = image;
+      });
+    }
+  }
+
+  void _startAnalysis() {
+    if (_selectedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lütfen önce bir görsel seçin', style: GoogleFonts.poppins()),
+          backgroundColor: Colors.redAccent,
         ),
       );
+      return;
     }
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LoadingScreen(
+          imageFile: _selectedImage!,
+          description: _descriptionController.text.trim(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E0B),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'Yeni Analiz',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Şık İkon
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1B5E20),
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF1B5E20).withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
+              Text(
+                'Ürün Görseli',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[300],
                 ),
-                child: const Icon(
-                  Icons.camera_alt,
-                  size: 60,
-                  color: Colors.white,
+              ),
+              const SizedBox(height: 12),
+              
+              // Modern Upload Area
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: const Color(0xFF1A1A1A),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (context) => SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.camera_alt, color: Colors.white),
+                            title: Text('Kameradan Çek', style: GoogleFonts.poppins(color: Colors.white)),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickImage(ImageSource.camera);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.photo_library, color: Colors.white),
+                            title: Text('Galeriden Seç', style: GoogleFonts.poppins(color: Colors.white)),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickImage(ImageSource.gallery);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF151916),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: _selectedImage != null ? const Color(0xFF4CAF50) : const Color(0xFF2E332F),
+                      width: 2,
+                    ),
+                  ),
+                  child: _selectedImage != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(22),
+                          child: kIsWeb
+                              ? Image.network(_selectedImage!.path, fit: BoxFit.cover)
+                              : Image.file(File(_selectedImage!.path), fit: BoxFit.cover),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1B5E20).withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.cloud_upload_outlined, size: 40, color: Color(0xFF4CAF50)),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Görsel Yüklemek İçin Dokunun',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: Colors.grey[400],
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
               ),
               
               const SizedBox(height: 32),
               
-              // CraftAgent Başlığı
               Text(
-                'CraftAgent',
-                style: GoogleFonts.poppins(
-                  fontSize: 42,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 2,
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              Text(
-                'AI Destekli Ürün Analizi',
+                'Ürün Hikayesi ve Detayları (Opsiyonel)',
                 style: GoogleFonts.poppins(
                   fontSize: 16,
-                  color: Colors.grey[400],
-                  letterSpacing: 1,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[300],
+                ),
+              ),
+              const SizedBox(height: 12),
+              
+              // Description Input
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF151916),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF2E332F)),
+                ),
+                child: TextField(
+                  controller: _descriptionController,
+                  maxLines: 4,
+                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Örn: Bu ürün tamamen el yapımı seramikten üretildi, toksik madde içermez...',
+                    hintStyle: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(16),
+                  ),
                 ),
               ),
               
-              const SizedBox(height: 60),
+              const SizedBox(height: 40),
               
-              // Kocaman Gölgeli Buton
+              // CTA Button
               Container(
                 width: double.infinity,
-                height: 70,
+                height: 60,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF1B5E20),
-                      const Color(0xFF2E7D32),
-                    ],
+                    colors: _selectedImage != null
+                        ? [const Color(0xFF1B5E20), const Color(0xFF2E7D32)]
+                        : [const Color(0xFF2E332F), const Color(0xFF2E332F)],
                   ),
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF1B5E20).withOpacity(0.4),
-                      blurRadius: 15,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: _selectedImage != null
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF1B5E20).withOpacity(0.4),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
+                          )
+                        ]
+                      : null,
                 ),
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(15),
-                    onTap: () => _pickImage(ImageSource.camera),
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: _startAnalysis,
                     child: Center(
                       child: Text(
-                        'Ürünü Analiz Et (Kamera)',
+                        'Analiz Et',
                         style: GoogleFonts.poppins(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
+                          color: _selectedImage != null ? Colors.white : Colors.grey[600],
+                          letterSpacing: 1,
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              // Galeri Butonu
-              TextButton(
-                onPressed: () => _pickImage(ImageSource.gallery),
-                child: Text(
-                  'Galeriden Seç',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: const Color(0xFF1B5E20),
-                    fontWeight: FontWeight.w500,
-                    decoration: TextDecoration.underline,
-                    decorationColor: const Color(0xFF1B5E20),
                   ),
                 ),
               ),

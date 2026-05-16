@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,23 +7,24 @@ import '../services/api_service.dart';
 import 'result_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
-  final File imageFile;
+  final XFile imageFile;
+  final String? description;
 
-  const LoadingScreen({super.key, required this.imageFile});
+  const LoadingScreen({super.key, required this.imageFile, this.description});
 
   @override
   State<LoadingScreen> createState() => _LoadingScreenState();
 }
 
 class _LoadingScreenState extends State<LoadingScreen> {
-  final ApiService _apiService = ApiService();
   int _currentTextIndex = 0;
   Timer? _textTimer;
 
   final List<String> _loadingTexts = [
-    'Görsel analiz ediliyor (Gemini 1.5 Flash)...',
-    'Küresel pazarlar taranıyor (Etsy & Amazon)...',
-    'İhracat stratejisi sentezleniyor...',
+    '✨ Yapay Zeka Görseli Analiz Ediyor...',
+    '🌍 Global Pazar Verileri Taranıyor (Etsy & Amazon)...',
+    '📊 Rakip Analizi Yapılıyor...',
+    '🚀 E-İhracat ve Fiyat Stratejisi Oluşturuluyor...',
   ];
 
   @override
@@ -43,10 +44,15 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   Future<void> _analyzeProduct() async {
     try {
-      final result = await ApiService.analyzeProduct(widget.imageFile);
+      final result = await ApiService.analyzeProduct(
+        widget.imageFile,
+        description: widget.description,
+      );
 
       // Timer'ı iptal et
       _textTimer?.cancel();
+
+      if (!mounted) return;
 
       // ResultScreen'e geçiş
       Navigator.pushReplacement(
@@ -58,6 +64,8 @@ class _LoadingScreenState extends State<LoadingScreen> {
       );
     } catch (e) {
       _textTimer?.cancel();
+      if (!mounted) return;
+      
       // Hata durumu
       Navigator.pushReplacement(
         context,
