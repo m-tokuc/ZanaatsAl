@@ -25,7 +25,7 @@ class ZanaatsAlOrchestrator:
         self.strategy_model = genai.GenerativeModel('gemini-2.5-flash')
         self.market_agent = MarketResearchAgent()
     
-    async def run_full_analysis_async(self, image_path: str, description: Optional[str] = None) -> Dict:
+    async def run_full_analysis_async(self, image_path: str, description: Optional[str] = None, category: Optional[str] = None, material: Optional[str] = None) -> Dict:
         """
         Tam otonom analiz akışı:
         1. Vision analizi
@@ -53,7 +53,7 @@ class ZanaatsAlOrchestrator:
             
             # Adım 3: Strateji Üretimi
             print("\n🧠 Adım 3: E-İhracat ve Satış Stratejisi Üretimi")
-            strategy_result = self._generate_export_strategy(vision_result, market_result, description)
+            strategy_result = self._generate_export_strategy(vision_result, market_result, description, category, material)
             if not strategy_result:
                 # Strateji üretimi başarısız olursa basit fallback
                 strategy_result = self._generate_fallback_strategy(vision_result)
@@ -102,13 +102,13 @@ class ZanaatsAlOrchestrator:
             print(f"❌ Pazar araştırması hatası: {str(e)}")
             return None
     
-    def _generate_export_strategy(self, vision_data: Dict, market_data: Dict, description: Optional[str] = None) -> Optional[Dict]:
+    def _generate_export_strategy(self, vision_data: Dict, market_data: Dict, description: Optional[str] = None, category: Optional[str] = None, material: Optional[str] = None) -> Optional[Dict]:
         """
         Vision ve pazar verilerine dayalı E-ihracat stratejisi üretir
         """
         try:
             # Strateji prompt'u oluştur
-            strategy_prompt = self._create_strategy_prompt(vision_data, market_data, description)
+            strategy_prompt = self._create_strategy_prompt(vision_data, market_data, description, category, material)
             
             print("📝 Strateji analizi yapılıyor...")
             
@@ -139,16 +139,18 @@ class ZanaatsAlOrchestrator:
             print(f"❌ Strateji üretimi hatası: {str(e)}")
             return None
     
-    def _create_strategy_prompt(self, vision_data: Dict, market_data: Dict, description: Optional[str] = None) -> str:
+    def _create_strategy_prompt(self, vision_data: Dict, market_data: Dict, description: Optional[str] = None, category: Optional[str] = None, material: Optional[str] = None) -> str:
         """
         Strateji üretimi için Gemini prompt'u oluşturur
         """
         prompt = f"""
         SEN BİR E-İHRACAT DANIŞMANISIN. Aşağıdaki verileri analiz ederek profesyonel bir E-İhracat ve Satış Stratejisi hazırla:
         
-        === ÜRÜN VİZYON ANALİZİ ===
-        Kategori: {vision_data.get('kategori', 'N/A')}
-        Materyal: {vision_data.get('materyal', 'N/A')}
+        === ÜRÜN VİZYON ANALİZİ VE KULLANICI VERİLERİ ===
+        Kategori (Yapay Zeka): {vision_data.get('kategori', 'N/A')}
+        Kategori (Kullanıcı Seçimi): {category if category else 'Belirtilmedi'}
+        Materyal (Kullanıcı Seçimi): {material if material else 'Belirtilmedi'}
+        Materyal (Yapay Zeka): {vision_data.get('materyal', 'N/A')}
         Stil: {vision_data.get('stil', 'N/A')}
         Hedef Kitle: {vision_data.get('hedef_kitle', 'N/A')}
         Anahtar Kelimeler: {', '.join(vision_data.get('anahtar_kelimeler', []))}

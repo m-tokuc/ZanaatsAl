@@ -9,8 +9,16 @@ import 'result_screen.dart';
 class LoadingScreen extends StatefulWidget {
   final XFile imageFile;
   final String? description;
+  final String? category;
+  final String? material;
 
-  const LoadingScreen({super.key, required this.imageFile, this.description});
+  const LoadingScreen({
+    super.key, 
+    required this.imageFile, 
+    this.description,
+    this.category,
+    this.material,
+  });
 
   @override
   State<LoadingScreen> createState() => _LoadingScreenState();
@@ -47,6 +55,8 @@ class _LoadingScreenState extends State<LoadingScreen> {
       final result = await ApiService.analyzeProduct(
         widget.imageFile,
         description: widget.description,
+        category: widget.category,
+        material: widget.material,
       );
 
       // Timer'ı iptal et

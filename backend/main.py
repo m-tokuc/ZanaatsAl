@@ -58,7 +58,9 @@ async def health_check():
 async def analyze_product(
     file: UploadFile = File(...),
     mock: Optional[str] = None,
-    description: Optional[str] = Form(None)
+    description: Optional[str] = Form(None),
+    category: Optional[str] = Form(None),
+    material: Optional[str] = Form(None)
 ):
     """
     Ürün görselini analiz eder ve tam e-ihracat stratejisi üretir
@@ -85,11 +87,37 @@ async def analyze_product(
                 'data': {
                     "baslik": "El Yapımı Seramik Vazo (Mock)",
                     "export_strategy": {
-                        "suggested_title": "Handmade Ceramic Vase - Artisan Home Decor",
-                        "suggested_price": "$34.99",
-                        "marketing_hook": "Elevate your living space with this beautifully handcrafted ceramic vase. Minimalist design meets artisan craftsmanship."
-                    },
-                    "rakip_analizi": "Rakipler Etsy'de benzer el yapımı vazoları 25-45$ bandında satmaktadır. Bu ürünün özgün tasarımı sayesinde premium bir fiyatlandırma ile rekabet avantajı sağlanabilir."
+                        "urun_pozisyonlandirma": {
+                            "benzersiz_deger_oneri": "Özgün tasarım ve premium malzeme birleşimi",
+                            "farklasilma_stratejisi": "Premium materyal ve tamamen el işçiliği ile fabrikasyon ürünlerden ayrışır.",
+                            "hedef_pazar_segmenti": "Özel tasarımlara ilgi duyan kitle."
+                        },
+                        "fiyatlandirma_stratejisi": {
+                            "onerilen_fiyat_araligi": "45.00 - 65.00 USD",
+                            "fiyatlandirma_mantigi": "Premium materyal ve el işçiliği vurgusu ile orta-üst segment",
+                            "psikolojik_fiyatlandirma": "49.99 USD veya 54.99 USD"
+                        },
+                        "platform_stratejisi": {
+                            "oncelikli_platformlar": ["Etsy", "Amazon Handmade"],
+                            "platform_ozel_stratejiler": "Etsy'de yapım aşaması videoları.",
+                            "cross_promotion": "Instagram Reels üzerinden trafik sağlanmalı."
+                        },
+                        "pazarlama_ve_icerik": {
+                            "ana_mesajlar": [
+                                "Zamansız tasarım, uzun ömürlü kullanım.",
+                                "Tamamen el yapımı ve sürdürülebilir.",
+                                "Size özel benzersiz bir parça."
+                            ],
+                            "hedef_kitle_mesajlari": "Kaliteyi ve özgünlüğü arayanlara özel.",
+                            "icerik_turleri": ["Yapım Aşaması Reels", "Detay Fotoğrafları"],
+                            "seo_stratejisi": "Handmade artisan product, unique design, premium quality."
+                        },
+                        "ihracat_odakli_oneriler": {
+                            "ulke_odaklari": ["ABD", "Birleşik Krallık", "Almanya"],
+                            "kulturel_uyarlama": "Minimalist ve estetik odaklı sunum.",
+                            "lojistik_onerileri": "Özel kutulu premium kargo gönderimi."
+                        }
+                    }
                 }
             }
         )
@@ -142,7 +170,12 @@ async def analyze_product(
             temp_file_path = temp_file.name
         
         # Tam otonom analizi çalıştır
-        result = await orchestrator.run_full_analysis_async(temp_file_path, description=description)
+        result = await orchestrator.run_full_analysis_async(
+            temp_file_path, 
+            description=description,
+            category=category,
+            material=material
+        )
         
         if result.get('success', False):
             logger.info("Analysis completed successfully")

@@ -15,6 +15,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _materialController = TextEditingController();
+  String? _selectedCategory;
   XFile? _selectedImage;
 
   Future<void> _pickImage(ImageSource source) async {
@@ -43,6 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context) => LoadingScreen(
           imageFile: _selectedImage!,
           description: _descriptionController.text.trim(),
+          category: _selectedCategory,
+          material: _materialController.text.trim(),
         ),
       ),
     );
@@ -51,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _descriptionController.dispose();
+    _materialController.dispose();
     super.dispose();
   }
 
@@ -165,6 +170,78 @@ class _HomeScreenState extends State<HomeScreen> {
               
               const SizedBox(height: 32),
               
+              // Kategori Seçimi
+              Text(
+                'Ürün Kategorisi',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[300],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF151916),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF2E332F)),
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedCategory,
+                  dropdownColor: const Color(0xFF1A1A1A),
+                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  ),
+                  hint: Text('Kategori Seçin', style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14)),
+                  items: ['Çanta & Cüzdan', 'Giyim', 'Takı & Aksesuar', 'Ev Dekorasyonu', 'Sanat & Tablo']
+                      .map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedCategory = newValue;
+                    });
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              
+              // Ana Materyal
+              Text(
+                'Ana Materyal / Malzeme',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[300],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF151916),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF2E332F)),
+                ),
+                child: TextField(
+                  controller: _materialController,
+                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Örn: Hakiki Deri, Pamuk, Epoksi, Ahşap...',
+                    hintStyle: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              
               Text(
                 'Ürün Hikayesi ve Detayları (Opsiyonel)',
                 style: GoogleFonts.poppins(
@@ -187,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   maxLines: 4,
                   style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'Örn: Bu ürün tamamen el yapımı seramikten üretildi, toksik madde içermez...',
+                    hintText: "Örn: 1980'lerden esinlenilmiş, tamamen el dikişi, sürdürülebilir malzemelerle üretilmiş minimalist cüzdan...",
                     hintStyle: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.all(16),

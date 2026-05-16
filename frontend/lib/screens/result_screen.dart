@@ -93,10 +93,35 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final exportStrategy = data['export_strategy'] ?? {};
-    final suggestedTitle = exportStrategy['suggested_title'] ?? 'Belirtilmedi';
-    final suggestedPrice = exportStrategy['suggested_price'] ?? 'Belirtilmedi';
-    final marketingHook = exportStrategy['marketing_hook'] ?? 'Belirtilmedi';
-    final competitorAnalysis = data['rakip_analizi'] ?? 'Belirtilmedi';
+    
+    // Güvenli değer okuma yardımcı fonksiyonu
+    String getNestedValue(Map? map, String key1, String key2, [String defaultValue = 'Belirtilmedi']) {
+      if (map != null && map[key1] != null && map[key1] is Map && map[key1][key2] != null) {
+        return map[key1][key2].toString();
+      }
+      return defaultValue;
+    }
+
+    final suggestedPrice = getNestedValue(exportStrategy, 'fiyatlandirma_stratejisi', 'onerilen_fiyat_araligi');
+    final uniqueValue = getNestedValue(exportStrategy, 'urun_pozisyonlandirma', 'benzersiz_deger_oneri');
+    
+    String mainMessages = 'Belirtilmedi';
+    if (exportStrategy['pazarlama_ve_icerik'] != null && exportStrategy['pazarlama_ve_icerik']['ana_mesajlar'] is List) {
+      mainMessages = (exportStrategy['pazarlama_ve_icerik']['ana_mesajlar'] as List).join('\n• ');
+      if (mainMessages.isNotEmpty) mainMessages = '• $mainMessages';
+    }
+
+    final seoStrategy = getNestedValue(exportStrategy, 'pazarlama_ve_icerik', 'seo_stratejisi');
+    
+    String platforms = 'Belirtilmedi';
+    if (exportStrategy['platform_stratejisi'] != null && exportStrategy['platform_stratejisi']['oncelikli_platformlar'] is List) {
+      platforms = (exportStrategy['platform_stratejisi']['oncelikli_platformlar'] as List).join(', ');
+    }
+    
+    String targetCountries = 'Belirtilmedi';
+    if (exportStrategy['ihracat_odakli_oneriler'] != null && exportStrategy['ihracat_odakli_oneriler']['ulke_odaklari'] is List) {
+      targetCountries = (exportStrategy['ihracat_odakli_oneriler']['ulke_odaklari'] as List).join(', ');
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E0B),
@@ -176,15 +201,15 @@ class ResultScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // Title Card
+                  // Title Card (Benzersiz Değer Önerisi)
                   _buildGlassCard(
                     context: context,
-                    title: 'Optimize Edilmiş Başlık',
-                    icon: Icons.title,
-                    iconColor: Colors.blueAccent,
-                    copyText: suggestedTitle,
+                    title: 'Benzersiz Değer Önerisi',
+                    icon: Icons.auto_awesome,
+                    iconColor: Colors.purpleAccent,
+                    copyText: uniqueValue,
                     content: Text(
-                      suggestedTitle,
+                      uniqueValue,
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         color: Colors.white,
@@ -193,15 +218,15 @@ class ResultScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // Marketing Hook Card
+                  // Marketing Hook Card (Pazarlama Mesajları)
                   _buildGlassCard(
                     context: context,
-                    title: 'Pazarlama Metni & Hikaye',
-                    icon: Icons.auto_awesome,
-                    iconColor: Colors.purpleAccent,
-                    copyText: marketingHook,
+                    title: 'Ana Pazarlama Mesajları',
+                    icon: Icons.campaign_outlined,
+                    iconColor: Colors.blueAccent,
+                    copyText: mainMessages,
                     content: Text(
-                      marketingHook,
+                      mainMessages,
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         color: Colors.grey[300],
@@ -210,18 +235,27 @@ class ResultScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // Competitor Analysis Card
+                  // Competitor Analysis Card (SEO ve Platformlar)
                   _buildGlassCard(
                     context: context,
-                    title: 'Rakip ve Pazar Analizi',
-                    icon: Icons.analytics_outlined,
+                    title: 'Pazar ve SEO Stratejisi',
+                    icon: Icons.language,
                     iconColor: Colors.orangeAccent,
-                    content: Text(
-                      competitorAnalysis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        color: Colors.grey[300],
-                        height: 1.6,
+                    content: RichText(
+                      text: TextSpan(
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          color: Colors.grey[300],
+                          height: 1.6,
+                        ),
+                        children: [
+                          const TextSpan(text: 'Öncelikli Platformlar: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                          TextSpan(text: '$platforms\n\n'),
+                          const TextSpan(text: 'Hedef Ülkeler: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                          TextSpan(text: '$targetCountries\n\n'),
+                          const TextSpan(text: 'SEO Stratejisi: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                          TextSpan(text: seoStrategy),
+                        ],
                       ),
                     ),
                   ),

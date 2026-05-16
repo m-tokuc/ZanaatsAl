@@ -8,7 +8,12 @@ class ApiService {
   static const String apiUrl =
       'https://contemptibly-septemviral-apollo.ngrok-free.dev/analyze';
 
-  static Future<Map<String, dynamic>> analyzeProduct(XFile imageFile, {String? description}) async {
+  static Future<Map<String, dynamic>> analyzeProduct(
+    XFile imageFile, {
+    String? description,
+    String? category,
+    String? material,
+  }) async {
     try {
       // POST isteği ve Multipart formatı oluşturuluyor
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
@@ -20,9 +25,15 @@ class ApiService {
             'true', // Ngrok uyarı sayfasını atlamak için şart!
       });
 
-      // Varsa ürün açıklamasını ekle
+      // Varsa ürün detaylarını ekle
       if (description != null && description.isNotEmpty) {
         request.fields['description'] = description;
+      }
+      if (category != null && category.isNotEmpty) {
+        request.fields['category'] = category;
+      }
+      if (material != null && material.isNotEmpty) {
+        request.fields['material'] = material;
       }
 
       // Fotoğrafı byte olarak oku
