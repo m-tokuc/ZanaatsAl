@@ -176,34 +176,26 @@ class ZanaatsAlOrchestrator:
         {{
             "urun_pozisyonlandirma": {{
                 "benzersiz_deger_oneri": "Ürünün benzersiz satış noktası",
-                "farklasilma_stratejisi": "Rakiplerden nasıl ayrışılacak",
                 "hedef_pazar_segmenti": "Odaklanılacak pazar segmenti"
             }},
             "fiyatlandirma_stratejisi": {{
-                "onerilen_fiyat_araligi": "USD cinsinden fiyat aralığı",
-                "fiyatlandirma_mantigi": "Premium/mid-range/budget",
-                "psikolojik_fiyatlandirma": "Örnek fiyat noktaları"
+                "tr_fiyat_tl": "Türkiye pazarı için tahmini fiyat aralığı (TL, örn: 450 - 600 TL)",
+                "global_fiyat_usd": "Global pazar için tahmini fiyat aralığı (USD, örn: $35 - $50)"
             }},
-            "platform_stratejisi": {{
-                "oncelikli_platformlar": ["Etsy", "Amazon", "Instagram"],
-                "platform_ozel_stratejiler": "Her platform için özel yaklaşım",
-                "cross_promotion": "Platformlar arası promosyon"
+            "pazar_ve_seo": {{
+                "tr_stratejisi": {{
+                    "platformlar": ["Trendyol", "Shopier", "Hepsiburada"],
+                    "seo_kelimeleri": "Türkiye için Türkçe SEO anahtar kelimeleri"
+                }},
+                "global_strateji": {{
+                    "platformlar": ["Etsy", "Amazon", "Shopify"],
+                    "seo_kelimeleri": "Global pazar için İngilizce SEO anahtar kelimeleri"
+                }}
             }},
             "pazarlama_ve_icerik": {{
-                "ana_mesajlar": ["Ana pazarlama mesajları"],
-                "hedef_kitle_mesajlari": "Farklı kitlelere özel mesajlar",
-                "icerik_turleri": ["Video", "Blog", "Social Media"],
-                "seo_stratejisi": "Anahtar kelime stratejisi"
-            }},
-            "operasyonel_plan": {{
-                "adimlar": ["Aylık bazda adımlar"],
-                "kpi_metrikleri": ["Başarı ölçütleri"],
-                "riskler": ["Potansiyel riskler ve çözümler"]
-            }},
-            "ihracat_odakli_oneriler": {{
-                "ulke_odaklari": ["Öncelikli ülkeler"],
-                "kulturel_uyarlama": "Kültürel farklılıklara göre uyarlama",
-                "lojistik_onerileri": "Uluslararası gönderim stratejisi"
+                "urun_aciklamasi_tr": "Satıcının doğrudan kopyalayıp ürününe yapıştırabileceği ikna edici Türkçe e-ticaret açıklaması",
+                "urun_aciklamasi_en": "Satıcının doğrudan kopyalayıp ürününe yapıştırabileceği ikna edici İngilizce e-ticaret açıklaması (Translated description)",
+                "ana_mesajlar": ["Ana pazarlama mesajları"]
             }}
         }}
         

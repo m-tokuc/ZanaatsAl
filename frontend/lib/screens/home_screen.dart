@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'loading_screen.dart';
+import 'history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -75,6 +76,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.collections_bookmark_outlined, color: Colors.white),
+            tooltip: 'Koleksiyonum',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HistoryScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
