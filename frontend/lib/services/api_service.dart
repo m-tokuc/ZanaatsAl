@@ -3,13 +3,20 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
-class ApiService {
-  // Muhammet'in gönderdiği gerçek Ngrok linki
-  static const String _baseUrl =
-      'https://contemptibly-septemviral-apollo.ngrok-free.dev';
+import 'package:flutter/foundation.dart';
 
-  static const String apiUrl = '$_baseUrl/analyze';
-  static const String studioAiUrl = '$_baseUrl/studio-ai';
+class ApiService {
+  // Eğer web uygulaması localhost'ta çalışıyorsa yerel backend'e bağlansın.
+  // Değilse ngrok bağlantısına yönlensin.
+  static String get _baseUrl {
+    if (kIsWeb && Uri.base.host == 'localhost') {
+      return 'http://localhost:8000';
+    }
+    return 'https://contemptibly-septemviral-apollo.ngrok-free.dev';
+  }
+
+  static String get apiUrl => '$_baseUrl/analyze';
+  static String get studioAiUrl => '$_baseUrl/studio-ai';
 
   // Ortak header'lar
   static Map<String, String> get _commonHeaders => {
@@ -89,17 +96,22 @@ class ApiService {
   // Studio AI – Profesyonel Stüdyo Görseli Oluştur
   // ---------------------------------------------------------------------------
   /// [imageFile] kullanıcının seçtiği ürün görseli.
+  /// [backgroundType] seçilen arka plan şablon ID'si (örn: 'rustic_wood').
   ///
   /// Döndürür: `{ 'studio_image_base64': String, 'mime_type': String }`
   static Future<Map<String, dynamic>> generateStudioImage(
-    XFile imageFile,
-  ) async {
+    XFile imageFile, {
+    String backgroundType = 'studio_white',
+  }) async {
     try {
       final bytes = await imageFile.readAsBytes();
 
       var request =
           http.MultipartRequest('POST', Uri.parse(studioAiUrl));
       request.headers.addAll(_commonHeaders);
+
+      // Seçilen arka plan temasını form field olarak gönder
+      request.fields['background_type'] = backgroundType;
 
       request.files.add(
         http.MultipartFile.fromBytes(

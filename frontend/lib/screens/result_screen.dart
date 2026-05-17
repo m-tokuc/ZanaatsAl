@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'photo_enhancement_screen.dart';
+
 import 'studio_screen.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -380,50 +380,6 @@ class _ResultScreenState extends State<ResultScreen> {
                     ),
                   ),
 
-                  // AI Photo Enhancement Button
-                  Container(
-                    width: double.infinity,
-                    height: 60,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF6A1B9A), Color(0xFF8E24AA)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF6A1B9A).withOpacity(0.4),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                           Navigator.push(
-                             context,
-                             MaterialPageRoute(
-                               builder: (context) => PhotoEnhancementScreen(imageFile: widget.imageFile),
-                             ),
-                           );
-                        },
-                        child: Center(
-                          child: Text(
-                            '✨ AI Fotoğraf İyileştirme',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
 
                   // ── Stüdyo AI Butonu ──────────────────────────────────
                   Container(

@@ -233,13 +233,18 @@ async def analyze_product(
 @app.post("/studio-ai")
 async def studio_ai(
     file: UploadFile = File(...),
+    background_type: str = Form("studio_white"),
 ):
     """
     Studio AI Endpoint
     ==================
     1. rembg ile arka planı siler → şeffaf PNG
-    2. Gemini ile profesyonel stüdyo ortamı ekler
+    2. Gemini ile seçilen arka plan temasında profesyonel stüdyo ortamı ekler
     3. Sonuç JPEG görselini base64 olarak döndürür
+
+    Desteklenen background_type değerleri:
+    - studio_white, rustic_wood, minimal_marble,
+      modern_concrete, nature_leaves, premium_black
     """
     if not studio_service:
         return JSONResponse(
@@ -262,11 +267,11 @@ async def studio_ai(
         )
 
     try:
-        logger.info(f"🎨 Studio AI isteği alındı: {file.filename}")
+        logger.info(f"🎨 Studio AI isteği alındı: {file.filename} (tema: {background_type})")
         image_bytes = await file.read()
 
-        # Pipeline: arka plan sil → stüdyo ortamı ekle
-        result_bytes = await studio_service.process_studio_ai(image_bytes)
+        # Pipeline: arka plan sil → seçilen temada stüdyo ortamı ekle
+        result_bytes = await studio_service.process_studio_ai(image_bytes, background_type)
 
         # JPEG → base64
         result_b64 = base64.b64encode(result_bytes).decode('utf-8')
@@ -279,7 +284,8 @@ async def studio_ai(
                 'message': 'Ürününüz başarıyla profesyonel stüdyo ortamına taşındı!',
                 'data': {
                     'studio_image_base64': result_b64,
-                    'mime_type': 'image/jpeg'
+                    'mime_type': 'image/jpeg',
+                    'background_type': background_type
                 }
             }
         )
