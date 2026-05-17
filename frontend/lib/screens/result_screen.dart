@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'photo_enhancement_screen.dart';
+import 'studio_screen.dart';
 
 class ResultScreen extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -383,7 +384,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   Container(
                     width: double.infinity,
                     height: 60,
-                    margin: const EdgeInsets.only(bottom: 40),
+                    margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFF6A1B9A), Color(0xFF8E24AA)],
@@ -418,6 +419,115 @@ class _ResultScreenState extends State<ResultScreen> {
                               color: Colors.white,
                               letterSpacing: 0.5,
                             ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // ── Stüdyo AI Butonu ──────────────────────────────────
+                  Container(
+                    width: double.infinity,
+                    height: 65,
+                    margin: const EdgeInsets.only(bottom: 40),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF1A0533), Color(0xFF2D0B6B)],
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xFF7B2FF7).withOpacity(0.6),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF7B2FF7).withOpacity(0.35),
+                          blurRadius: 20,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(18),
+                        splashColor: const Color(0xFF7B2FF7).withOpacity(0.3),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (_, animation, __) =>
+                                  StudioAIScreen(imageFile: widget.imageFile),
+                              transitionsBuilder:
+                                  (_, animation, __, child) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              },
+                              transitionDuration:
+                                  const Duration(milliseconds: 400),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            children: [
+                              // İkon kutusu
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF7B2FF7),
+                                      Color(0xFF00D4FF)
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.auto_awesome,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              // Metin
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Stüdyo AI',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Profesyonel stüdyo ortamına taşı',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: const Color(0xFF00D4FF),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                color: Color(0xFF7B2FF7),
+                                size: 16,
+                              ),
+                            ],
                           ),
                         ),
                       ),

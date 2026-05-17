@@ -4,10 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 import json
+import base64
 import logging
 from dotenv import load_dotenv
 from orchestrator_service import ZanaatsAlOrchestrator
 from api_contract import APIResponse, ENDPOINT_DOCS
+from studio_service import StudioAIService
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -38,6 +40,14 @@ try:
 except Exception as e:
     print(f"❌ Orkestratör yüklenemedi: {str(e)}")
     orchestrator = None
+
+# Initialize Studio AI Service
+try:
+    studio_service = StudioAIService()
+    print("✅ Studio AI Servisi başarıyla yüklendi")
+except Exception as e:
+    print(f"❌ Studio AI Servisi yüklenemedi: {str(e)}")
+    studio_service = None
 
 @app.get("/")
 async def root():
@@ -78,39 +88,44 @@ async def analyze_product(
     """
     # Mock Kontrolü (Sunum sırasında internet/API çökmesine karşı)
     if mock and mock.lower() == 'true':
-        logger.info("Mock analysis triggered")
+        logger.info(f"Returning dynamic mock response for: {category}, {material}")
+        user_category = category if category else "Ürün"
+        user_material = material if material else "Özel Malzeme"
+        user_desc = description if description else "Kaliteli ve şık bir tasarım."
+        
         return JSONResponse(
             status_code=200,
             content={
                 'success': True,
-                'message': 'Mock analiz başarılı.',
+                'message': '[SUNUM MODU] Analiz başarıyla tamamlandı.',
                 'data': {
-                    "baslik": "El Yapımı Seramik Vazo (Mock)",
+                    "baslik": f"{user_material} {user_category} (Simüle Edildi)",
                     "export_strategy": {
                         "urun_pozisyonlandirma": {
-                            "benzersiz_deger_oneri": "Özgün tasarım ve premium malzeme birleşimi",
-                            "hedef_pazar_segmenti": "Özel tasarımlara ilgi duyan kitle."
+                            "benzersiz_deger_oneri": f"{user_material} kullanılarak üretilen bu {user_category}, {user_desc[:50]}... vizyonuyla fark yaratıyor.",
+                            "hedef_pazar_segmenti": f"Premium {user_category} ve {user_material} ürünlerine ilgi duyan kitle."
                         },
                         "fiyatlandirma_stratejisi": {
-                            "tr_fiyat_tl": "850.00 TL - 1200.00 TL",
-                            "global_fiyat_usd": "45.00 USD - 65.00 USD"
+                            "tr_fiyat_tl": "950.00 TL - 1450.00 TL",
+                            "global_fiyat_usd": "55.00 USD - 85.00 USD"
                         },
                         "pazar_ve_seo": {
                             "tr_stratejisi": {
                                 "platformlar": ["Trendyol", "Shopier", "Hepsiburada"],
-                                "seo_kelimeleri": "Hakiki deri cüzdan, el yapımı erkek cüzdan, minimalist kartlık"
+                                "seo_kelimeleri": f"{user_category}, {user_material}, el yapımı, tasarım"
                             },
                             "global_strateji": {
-                                "platformlar": ["Etsy", "Amazon Handmade"],
-                                "seo_kelimeleri": "Handmade leather wallet, minimalist mens cardholder, artisan leather goods"
+                                "platformlar": ["Etsy", "Amazon Handmade", "Shopify"],
+                                "seo_kelimeleri": f"Handmade {user_category}, {user_material} gift, artisan {user_category}"
                             }
                         },
                         "pazarlama_ve_icerik": {
-                            "urun_aciklamasi_tr": "Sürdürülebilir malzemelerle, tamamen el işçiliği ile üretilmiş bu benzersiz ürün, tarzınızı yansıtırken uzun yıllar size eşlik edecek.",
-                            "urun_aciklamasi_en": "Crafted entirely by hand using sustainable materials, this unique product reflects your style while accompanying you for years to come.",
+                            "urun_aciklamasi_tr": f"{user_material} malzemeden titizlikle üretilmiş bu {user_category}, {user_desc}. Zanaatkar ellerden çıkan bu parça, hem dayanıklılığı hem de estetiği bir arada sunuyor.",
+                            "urun_aciklamasi_en": f"This {user_category} is meticulously crafted from {user_material}, {user_desc}. This piece from artisan hands offers both durability and aesthetics together.",
                             "ana_mesajlar": [
-                                "Zamansız tasarım, uzun ömürlü kullanım.",
-                                "Tamamen el yapımı ve sürdürülebilir."
+                                f"Yüksek kaliteli {user_material} kalitesi.",
+                                f"Özgün {user_category} tasarımı ve el emeği.",
+                                "Sürdürülebilir üretim anlayışı."
                             ]
                         }
                     }
@@ -214,6 +229,72 @@ async def analyze_product(
                 logger.info(f"Temporary file cleaned: {temp_file_path}")
             except Exception as e:
                 logger.warning(f"Failed to clean temp file: {str(e)}")
+
+@app.post("/studio-ai")
+async def studio_ai(
+    file: UploadFile = File(...),
+):
+    """
+    Studio AI Endpoint
+    ==================
+    1. rembg ile arka planı siler → şeffaf PNG
+    2. Gemini ile profesyonel stüdyo ortamı ekler
+    3. Sonuç JPEG görselini base64 olarak döndürür
+    """
+    if not studio_service:
+        return JSONResponse(
+            status_code=200,
+            content={
+                'success': False,
+                'message': 'Studio AI servisi hazır değil.',
+                'data': None
+            }
+        )
+
+    if not file.content_type or not file.content_type.startswith('image/'):
+        return JSONResponse(
+            status_code=200,
+            content={
+                'success': False,
+                'message': 'Lütfen geçerli bir resim dosyası yükleyin (JPG, PNG, WebP).',
+                'data': None
+            }
+        )
+
+    try:
+        logger.info(f"🎨 Studio AI isteği alındı: {file.filename}")
+        image_bytes = await file.read()
+
+        # Pipeline: arka plan sil → stüdyo ortamı ekle
+        result_bytes = await studio_service.process_studio_ai(image_bytes)
+
+        # JPEG → base64
+        result_b64 = base64.b64encode(result_bytes).decode('utf-8')
+
+        logger.info("✅ Studio AI: Profesyonel görsel başarıyla oluşturuldu.")
+        return JSONResponse(
+            status_code=200,
+            content={
+                'success': True,
+                'message': 'Ürününüz başarıyla profesyonel stüdyo ortamına taşındı!',
+                'data': {
+                    'studio_image_base64': result_b64,
+                    'mime_type': 'image/jpeg'
+                }
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Studio AI hatası: {str(e)}")
+        return JSONResponse(
+            status_code=200,
+            content={
+                'success': False,
+                'message': f'Studio AI işlemi sırasında bir hata oluştu: {str(e)}',
+                'data': None
+            }
+        )
+
 
 @app.get("/docs")
 async def get_docs():
