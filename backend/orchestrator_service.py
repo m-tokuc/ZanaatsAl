@@ -144,7 +144,12 @@ class ZanaatsAlOrchestrator:
         Strateji üretimi için Gemini prompt'u oluşturur
         """
         prompt = f"""
-        SEN BİR E-İHRACAT DANIŞMANISIN. Aşağıdaki verileri analiz ederek profesyonel bir E-İhracat ve Satış Stratejisi hazırla:
+        SEN BİR E-İHRACAT DANIŞMANISIN. Aşağıdaki verileri analiz ederek profesyonel bir E-İhracat ve Satış Stratejisi hazırlaman gerekiyor. 
+        
+        === KRİTİK TALİMATLAR ===
+        - KULLANICI BEYANINA SADIK KAL: Eğer kullanıcı Materyal veya Kategori belirtmişse, görsel analizinde farklı bir şey görsen bile KULLANICININ BEYANINI (Silikon, Deri vb.) esas alarak strateji kur.
+        - HİKAYEYE ODAKLAN: Kullanıcının "Satıcı Açıklaması" kısmında verdiği ürün hikayesini, emeğini ve detaylarını fiyatlandırma mantığında ve pazarlama mesajlarında (Açıklama TR/EN) mutlaka kullan.
+        - ANALİZ DERİNLİĞİ: Ürünün hem TR hem Global pazar için en gerçekçi SEO ve fiyat analizini yap.
         
         === ÜRÜN VİZYON ANALİZİ VE KULLANICI VERİLERİ ===
         Kategori (Yapay Zeka): {vision_data.get('kategori', 'N/A')}

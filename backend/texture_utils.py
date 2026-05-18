@@ -1,424 +1,137 @@
 """
-Prosedürel Doku Üretim Modülü — ZanaatsAl Studio AI (Profesyonel Sürüm)
-========================================================================
-numpy + PIL kullanarak gerçekçi, perspektifli ve stüdyo kalitesinde arka planlar üretir.
-- 3D kütük/log yüzeyi (Doğa teması için)
-- 3D mermer tezgah ve beveled perspektif kenarı
-- 3D beton plaka ve beveled beton kenarı
-- 3D ahşap masa panelleri
-- İki katmanlı fiziksel gölge (Contact + Ambient) ve ürün kenar feathering
+ZanaatsAl Studio AI — Gelişmiş Kompozit ve Doku Motoru (Sürüm 3.0)
+===================================================================
+Tüm yapay ve kötü duran numpy noise/prosedürel çizim kodları depreke edilmiş,
+yerine profesyonel ve yüksek çözünürlüklü stüdyo arka plan şablonlarını (PNG)
+kullanan ve ürünü zeminlerine kusursuz yerleştiren sistem getirilmiştir.
+
+Özellikler:
+  1. Yüksek çözünürlüklü premium şablon yükleyici (`generate_background`).
+  2. Floating (havada asılı kalma) önleyici ölçekleme ve 3D zemin hizalama (`preprocess_product`).
+  3. Çift katmanlı fiziksel gölge motoru (İnce contact shadow + geniş ambient bloom shadow).
+  4. Kenar feathering ve ortam ışığı renk entegrasyonu (apply_environment_tint).
 """
-import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageChops
+
+import os
+import logging
+from PIL import Image, ImageDraw, ImageFilter, ImageChops
+
+logger = logging.getLogger(__name__)
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Noise Primitives
+# 1. Premium Şablon Yükleyici (Prosedürel gürültü tamamen silindi)
 # ──────────────────────────────────────────────────────────────────────────────
 
-def smooth_noise(h: int, w: int, scale: int = 64) -> np.ndarray:
-    sh, sw = max(2, h // scale), max(2, w // scale)
-    small = np.random.rand(sh, sw).astype(np.float32)
-    img = Image.fromarray((small * 255).astype(np.uint8), "L")
-    img = img.resize((w, h), Image.BILINEAR)
-    img = img.filter(ImageFilter.GaussianBlur(radius=max(1, scale // 3)))
-    return np.array(img, dtype=np.float32) / 255.0
-
-
-def fractal_noise(h: int, w: int, octaves: int = 4, persistence: float = 0.5) -> np.ndarray:
-    result = np.zeros((h, w), dtype=np.float32)
-    amp, total, scale = 1.0, 0.0, 64
-    for _ in range(octaves):
-        result += smooth_noise(h, w, max(2, scale)) * amp
-        total += amp
-        amp *= persistence
-        scale = max(2, scale // 2)
-    return result / total
-
-
-def vertical_gradient(h: int, w: int, top: float = 0.0, bottom: float = 1.0) -> np.ndarray:
-    grad = np.linspace(top, bottom, h, dtype=np.float32)
-    return np.tile(grad[:, None], (1, w))
-
-
-def radial_highlight(h: int, w: int, cx: float, cy: float,
-                     radius: float, strength: float = 0.15) -> np.ndarray:
-    Y, X = np.mgrid[0:h, 0:w].astype(np.float32)
-    dist = np.sqrt((X - cx * w) ** 2 + (Y - cy * h) ** 2)
-    highlight = np.clip(1.0 - dist / (radius * max(w, h)), 0, 1)
-    return highlight * strength
-
-
-def apply_vignette(img_np: np.ndarray, strength: float = 0.3) -> np.ndarray:
-    h, w = img_np.shape[:2]
-    Y, X = np.mgrid[0:h, 0:w].astype(np.float32)
-    cx, cy = w / 2, h / 2
-    dist = np.sqrt((X - cx) ** 2 + (Y - cy) ** 2)
-    max_dist = np.sqrt(cx ** 2 + cy ** 2)
-    vignette = 1.0 - (dist / max_dist) * strength
-    vignette = np.clip(vignette, 0, 1)
-    if img_np.ndim == 3:
-        vignette = vignette[:, :, None]
-    return img_np * vignette
-
-
-def _np_to_pil(arr: np.ndarray) -> Image.Image:
-    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Gelişmiş Arka Plan Üreteçleri (Görsel Derinlik ve Perspektifli)
-# ──────────────────────────────────────────────────────────────────────────────
-
-def generate_bg_studio_white(w: int, h: int, horizon_y: int) -> Image.Image:
-    """Yumuşak arka duvar ve temiz zemin geçişli e-ticaret stüdyosu."""
-    img = np.ones((h, w, 3), dtype=np.float32) * 246
-    # Duvar ve zemin geçiş gradienti
-    grad = vertical_gradient(h, w, 0.90, 1.0)
-    img *= grad[:, :, None]
-    
-    # Merkez stüdyo softbox ışığı
-    img += radial_highlight(h, w, 0.5, 0.45, 0.65, 9.0)[:, :, None]
-    
-    # Zemin-Duvar geçiş bandı (Horizon gölgesi)
-    horizon_band = np.zeros((h, w), dtype=np.float32)
-    band_h = max(10, h // 25)
-    for y in range(horizon_y - band_h, horizon_y + band_h):
-        if 0 <= y < h:
-            t = 1.0 - abs(y - horizon_y) / band_h
-            horizon_band[y, :] = t * 14
-    img -= horizon_band[:, :, None]
-    
-    img = apply_vignette(img, 0.05)
-    return _np_to_pil(img)
-
-
-def generate_bg_rustic_wood(w: int, h: int, horizon_y: int) -> Image.Image:
-    """Gerçekçi ahşap paneller ve perspektif çizgileri olan meşe masa yüzeyi."""
-    # Arka Plan Duvarı (Koyu sıcak bej)
-    bg_wall = np.zeros((h, w, 3), dtype=np.float32)
-    wall_color = np.array([55, 42, 32], dtype=np.float32)
-    for y in range(horizon_y):
-        t = y / max(1, horizon_y)
-        bg_wall[y, :, :] = wall_color * (0.65 + t * 0.35)
-    
-    # Masa Yüzeyi Dokusu
-    table = np.zeros((h - horizon_y, w, 3), dtype=np.float32)
-    wood_base = np.array([160, 115, 75], dtype=np.float32)
-    wood_dark = np.array([80, 50, 30], dtype=np.float32)
-    
-    # Paneller halinde ahşap
-    th = h - horizon_y
-    panel_w = w // 4
-    distortion = fractal_noise(th, w, octaves=3, persistence=0.55)
-    
-    for y in range(th):
-        # Perspektifli grain efekti
-        grain_scale = 4.0 + (y / max(1, th)) * 8.0
-        grain = smooth_noise(1, w, scale=int(grain_scale))[0]
-        # Panel birleşim çizgileri
-        for x in range(w):
-            panel_idx = x // panel_w
-            line_factor = 1.0
-            # Panel sınırlarına yakın hafif gölge çizgileri
-            dist_to_border = min(x % panel_w, panel_w - (x % panel_w))
-            if dist_to_border < 4:
-                line_factor = 0.75 + (dist_to_border / 4.0) * 0.25
-                
-            noise_val = grain[x] * 0.5 + distortion[y, x] * 0.5
-            color = wood_dark + noise_val * (wood_base - wood_dark)
-            table[y, x, :] = color * line_factor
-            
-    # Masa yüzeyini yerleştir
-    img = bg_wall
-    img[horizon_y:, :, :] = table
-    
-    # Sıcak spot ışığı (Masa üstünde süzülen altın ışık)
-    img += radial_highlight(h, w, 0.55, 0.4, 0.55, 24)[:, :, None] * np.array([1.0, 0.82, 0.48], dtype=np.float32)
-    img = apply_vignette(img, 0.18)
-    return _np_to_pil(img)
-
-
-def generate_bg_minimal_marble(w: int, h: int, horizon_y: int) -> Image.Image:
-    """3D beveled bej mermer tezgah, üst yüzey mermer damarlı, ön yüzey gölgeli."""
-    # Arka Plan Duvarı (Minimal soft krem)
-    img = np.zeros((h, w, 3), dtype=np.float32)
-    wall_color = np.array([238, 235, 230], dtype=np.float32)
-    for y in range(horizon_y):
-        t = y / max(1, horizon_y)
-        img[y, :, :] = wall_color * (0.92 + t * 0.08)
-        
-    # Mermer Tezgah Üst Yüzeyi (Horizon'dan aşağıya doğru)
-    counter_h = h - horizon_y
-    counter = np.ones((counter_h, w, 3), dtype=np.float32) * 242
-    counter[:, :, 1] = 239
-    counter[:, :, 2] = 234
-    
-    # Carrara Damarları (Sinüzoidal + gürültülü yollar)
-    x_coords = np.linspace(0, 5 * np.pi, w)
-    y_coords = np.linspace(0, 5 * np.pi, counter_h)
-    X, Y = np.meshgrid(x_coords, y_coords)
-    distortion = fractal_noise(counter_h, w, octaves=4, persistence=0.6)
-    
-    # 2 set damar sistemi
-    veins1 = np.sin(X * 0.7 + Y * 1.3 + distortion * 6)
-    veins1 = 1.0 - np.power(np.abs(veins1), 0.18)
-    veins1 = np.clip(veins1 * 1.4 - 0.4, 0, 1)
-    
-    veins2 = np.sin(X * 2.2 + Y * 0.8 + distortion * 9)
-    veins2 = 1.0 - np.power(np.abs(veins2), 0.22)
-    veins2 = np.clip(veins2 * 1.8 - 0.8, 0, 1)
-    
-    veins = veins1 * 0.65 + veins2 * 0.35
-    vein_color = np.array([168, 164, 172], dtype=np.float32)
-    
-    for c in range(3):
-        counter[:, :, c] -= veins * (counter[:, :, c] - vein_color[c]) * 0.32
-        
-    img[horizon_y:, :, :] = counter
-    
-    # 3D Bevel/Kenar Efekti (Tezgahın en altındaki beveled pahlı bitiş kenarı)
-    bevel_y = h - max(12, h // 25)
-    if bevel_y > horizon_y:
-        # Ön dikme yüzü daha koyu gölgeli
-        for c in range(3):
-            img[bevel_y:, :, c] *= 0.75
-            
-    # Mermer cilası parlaması
-    img += radial_highlight(h, w, 0.45, 0.5, 0.6, 12)[:, :, None]
-    img = apply_vignette(img, 0.08)
-    return _np_to_pil(img)
-
-
-def generate_bg_modern_concrete(w: int, h: int, horizon_y: int) -> Image.Image:
-    """3D perspektif beveled beton plaka, pürüzlü dokulu."""
-    img = np.ones((h, w, 3), dtype=np.float32) * 65
-    
-    # Duvar gradienti
-    for y in range(horizon_y):
-        t = y / max(1, horizon_y)
-        img[y, :, :] *= (0.55 + t * 0.45)
-        
-    # Beton dokusu
-    coarse = fractal_noise(h, w, 4, 0.58)
-    fine = smooth_noise(h, w, scale=3)
-    patches = smooth_noise(h, w, scale=96)
-    texture = coarse * 0.45 + fine * 0.25 + patches * 0.3
-    img += (texture[:, :, None] - 0.5) * 36
-    
-    # 3D Kenar (Bitiş pahı)
-    bevel_y = h - max(14, h // 20)
-    for y in range(horizon_y, h):
-        if y >= bevel_y:
-            img[y, :, :] *= 0.68  # Ön dik yüz gölgesi
-            
-    # Spot ışığı
-    img += radial_highlight(h, w, 0.7, 0.3, 0.55, 18)[:, :, None]
-    img = apply_vignette(img, 0.24)
-    return _np_to_pil(img)
-
-
-def generate_bg_nature_leaves(w: int, h: int, horizon_y: int) -> Image.Image:
+def generate_background(bg_type: str, w: int, h: int, horizon_y: int = 0) -> Image.Image:
     """
-    Doğa Teması:
-    - Arka planda gökyüzü (mavi-turkuaz gradient) ve orman bokehi
-    - Ön tarafta ürünün basacağı 3D gerçekçi ahşap KÜTÜK (log slice) kesiti.
+    Backend/assets/studio_bases/ altındaki yüksek çözünürlüklü, perspective ve
+    profesyonel ışıklandırması olan gerçek arka plan şablonunu yükler ve ölçekler.
     """
-    # 1. Gökyüzü ve orman yeşili bokeh arka planı
-    img = np.zeros((h, w, 3), dtype=np.float32)
-    sky_top = np.array([135, 185, 220], dtype=np.float32)   # Yumuşak gökyüzü mavisi
-    forest_bot = np.array([45, 95, 40], dtype=np.float32)   # Orman yeşili
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(base_dir, "assets", "studio_bases", f"{bg_type}.png")
+    
+    logger.info(f"📂 Arka plan şablonu yükleniyor: {file_path}")
+    
+    if os.path.exists(file_path):
+        try:
+            bg = Image.open(file_path).convert("RGB")
+            # Hedef ekran boyutuna LANCZOS ile yüksek kalitede ölçekle
+            return bg.resize((w, h), Image.LANCZOS)
+        except Exception as e:
+            logger.error(f"❌ Şablon yüklenirken hata oluştu: {e}")
+            
+    # Dosya yoksa veya hata oluştuysa yedek profesyonel bej/gri softbox arka planı
+    logger.warning("⚠️ Şablon bulunamadı, fallback düz arka plan oluşturuluyor.")
+    fallback = Image.new("RGB", (w, h), (242, 241, 238))
+    draw = ImageDraw.Draw(fallback)
+    # Yumuşak bir dikey degrade uygula
     for y in range(h):
         t = y / max(1, h - 1)
-        img[y, :, :] = sky_top + (forest_bot - sky_top) * t
-        
-    # Yaprak bokehi
-    rng = np.random.RandomState(88)
-    bokeh = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(bokeh)
-    for _ in range(50):
-        cx = rng.randint(0, w)
-        cy = rng.randint(0, int(h * 0.75))
-        r = rng.randint(max(15, w // 25), max(30, w // 7))
-        green = rng.randint(90, 210)
-        red = rng.randint(30, 90)
-        alpha = rng.randint(20, 60)
-        draw.ellipse([cx - r, cy - r, cx + r, cy + r],
-                     fill=(red, green, rng.randint(30, 80), alpha))
-    bokeh = bokeh.filter(ImageFilter.GaussianBlur(radius=max(14, w // 20)))
-    bokeh_np = np.array(bokeh, dtype=np.float32)
-    alpha_mask = bokeh_np[:, :, 3:4] / 255.0
-    img = img * (1 - alpha_mask) + bokeh_np[:, :, :3] * alpha_mask
-    
-    # PIL formatına dönüştürüp kütük (log) çiziyoruz
-    bg_pil = _np_to_pil(img)
-    draw_pil = ImageDraw.Draw(bg_pil)
-    
-    # 2. Ürünün basacağı 3D Kütük (Log Slice) Yüzeyi
-    # Geniş bir elips çiziyoruz
-    log_cx = w // 2
-    log_cy = int(horizon_y + (h - horizon_y) * 0.3)
-    log_rx = int(w * 0.44)
-    log_ry = int((h - horizon_y) * 0.45)
-    
-    # Kütük halkaları (Rings)
-    ring_colors = [
-        (130, 95, 60),  # Dış kabuk (bark)
-        (145, 110, 75),
-        (185, 150, 110), # Yaş halkası açık renk
-        (165, 130, 90),
-        (190, 155, 115),
-        (170, 135, 95),
-        (195, 160, 120), # Merkez öz odun
-    ]
-    
-    # Dıştan içe halkaları çizip blur uygulayarak iç içe halka dokusu veriyoruz
-    for i, col in enumerate(ring_colors):
-        factor = 1.0 - (i / len(ring_colors)) * 0.85
-        cur_rx = int(log_rx * factor)
-        cur_ry = int(log_ry * factor)
-        
-        # Her halkaya hafif bir gürültülü dalgalanma ekliyoruz ki dümdüz elips olmasın
-        draw_pil.ellipse([
-            log_cx - cur_rx, log_cy - cur_ry,
-            log_cx + cur_rx, log_cy + cur_ry
-        ], fill=col)
-        
-    # Kütüğü genel olarak çok az yumuşatarak bütünleştiriyoruz
-    bg_np = np.array(bg_pil, dtype=np.float32)
-    
-    # Kütük üstüne radyal ahşap çatlakları ve radial noise ekleme (numpy ile)
-    # Kütüğün elips maskesini alalım
-    Y, X = np.mgrid[0:h, 0:w].astype(np.float32)
-    elips_val = ((X - log_cx) / log_rx) ** 2 + ((Y - log_cy) / log_ry) ** 2
-    log_mask = (elips_val <= 1.0).astype(np.float32)
-    
-    # Ahşap çatlak kanalları (radial veins)
-    fractal = fractal_noise(h, w, 4, PERSISTENCE:=0.6)
-    noise_rings = np.sin(np.sqrt((X - log_cx) ** 2 + (Y - log_cy) ** 2) * 0.15 + fractal * 3)
-    noise_rings = np.clip(1.0 - np.abs(noise_rings), 0, 1)
-    
-    # Kütük dokusuna gürültüyü entegre et
-    for c in range(3):
-        bg_np[:, :, c] -= log_mask * noise_rings * 15 * (1.0 - elips_val * 0.3)
-        
-    # Golden Sunlight (Sağ üstten ormanın içine süzülen altın ışınlar)
-    sun = radial_highlight(h, w, 0.78, 0.15, 0.5, 38)
-    bg_np[:, :, 0] += sun * 1.0
-    bg_np[:, :, 1] += sun * 0.78
-    bg_np[:, :, 2] += sun * 0.28
-    
-    bg_np = apply_vignette(bg_np, 0.12)
-    return _np_to_pil(bg_np)
-
-
-def generate_bg_premium_black(w: int, h: int, horizon_y: int) -> Image.Image:
-    """Mat lüks siyah yüzey, parlak neon soft spot ışıklı."""
-    img = np.ones((h, w, 3), dtype=np.float32) * 11
-    # Micro noise
-    texture = fractal_noise(h, w, 3, 0.52)
-    img += (texture[:, :, None] - 0.5) * 5
-    
-    # Sağ üst spotlight parlaması
-    spot = radial_highlight(h, w, 0.65, 0.28, 0.45, 48)
-    img += spot[:, :, None] * np.array([1.0, 0.96, 1.04], dtype=np.float32)
-    
-    # Horizon altı lüks parlak zemin (glossy yansıma)
-    for y in range(horizon_y, h):
-        t = (y - horizon_y) / max(1, h - horizon_y)
-        img[y, :, :] += 7.0 * (1.0 - t)
-        
-    img = apply_vignette(img, 0.32)
-    return _np_to_pil(img)
+        gray = int(245 - t * 15)
+        draw.line([(0, y), (w, y)], fill=(gray, gray - 2, gray - 5))
+    return fallback
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Background dispatcher
-# ──────────────────────────────────────────────────────────────────────────────
-
-BG_GENERATORS = {
-    "studio_white": generate_bg_studio_white,
-    "rustic_wood": generate_bg_rustic_wood,
-    "minimal_marble": generate_bg_minimal_marble,
-    "modern_concrete": generate_bg_modern_concrete,
-    "nature_leaves": generate_bg_nature_leaves,
-    "premium_black": generate_bg_premium_black,
-}
-
-def generate_background(bg_type: str, w: int, h: int, horizon_y: int) -> Image.Image:
-    gen = BG_GENERATORS.get(bg_type, generate_bg_studio_white)
-    return gen(w, h, horizon_y)
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Gelişmiş Ürün Preprocessing, Ölçekleme ve Kusursuz Yerleşim (Floating Engelleme)
+# 2. Ürün Ön-İşleme ve Kusursuz 3D Zemin Hizalama (No Floating)
 # ──────────────────────────────────────────────────────────────────────────────
 
 def preprocess_product(
-    product_rgba: Image.Image, target_w: int, target_h: int, horizon_y: int, bg_type: str
+    product_rgba: Image.Image, target_w: int, target_h: int, bg_type: str
 ) -> tuple[Image.Image, tuple]:
     """
-    Ürünü boş kenarlarından kırpar, ideal boyuta ölçekler,
-    ve alt kenarını tam zemin/kütük çizgisine hizalayarak 'havada durma' etkisini YOK EDER.
+    Ürünü boş kenarlarından kırpar, sahneye göre ideal oranda ölçekler,
+    ve alt kenarını şablonlardaki kütük/tezgah üst yüzeylerine piksel hassasiyetinde
+    hizalayıp yerleştirir. Havada durma/asılı kalma görüntüsünü tamamen YOK eder.
     """
     alpha = product_rgba.split()[3]
     bbox = alpha.getbbox()
     if not bbox:
         return product_rgba, (0, 0, target_w, target_h)
         
-    # Boş alanları kırp
+    # Kenar boşluklarını kırp
     cropped = product_rgba.crop(bbox)
     cw, ch = cropped.size
     
-    # Şablona göre ideal ölçeklendirme
-    if bg_type == "nature_leaves":
-        # Kütük üzerine tam oturması için biraz daha küçük (%45-50 yükseklik)
-        max_scale_h = target_h * 0.48
-        max_scale_w = target_w * 0.50
-    else:
-        max_scale_h = target_h * 0.56
-        max_scale_w = target_w * 0.60
-        
-    scale = min(max_scale_w / cw, max_scale_h / ch)
-    scaled_w = max(20, int(cw * scale))
-    scaled_h = max(20, int(ch * scale))
+    # Şablon bazlı hizalama ve ölçek katsayıları
+    # y_ratio: Ürünün alt kenarının oturacağı zemin yükseklik oranı (0.0 - 1.0)
+    # scale_ratio: Ürünün dikeyde sahneye oranla kaplayacağı ideal yükseklik payı
+    alignments = {
+        "studio_white": {"y_ratio": 0.62, "scale_ratio": 0.52},
+        "rustic_wood": {"y_ratio": 0.56, "scale_ratio": 0.48},     # Ahşap masanın üst yüzeyi
+        "minimal_marble": {"y_ratio": 0.54, "scale_ratio": 0.46},   # Mermer tezgahın üst yüzeyi
+        "modern_concrete": {"y_ratio": 0.52, "scale_ratio": 0.46},  # Beton bloğun üst yüzeyi
+        "nature_leaves": {"y_ratio": 0.64, "scale_ratio": 0.38},    # Kütüğün (log slice) üst yüzeyi
+        "premium_black": {"y_ratio": 0.65, "scale_ratio": 0.42},    # Premium siyah bloğun üst yüzeyi
+    }
     
-    scaled = cropped.resize((scaled_w, scaled_h), Image.LANCZOS)
+    align = alignments.get(bg_type, alignments["studio_white"])
+    y_ratio = align["y_ratio"]
+    scale_ratio = align["scale_ratio"]
     
-    # Yerleşim: Alt kenarı tam horizon_y veya kütük üstüne oturt
-    px = (target_w - scaled_w) // 2
+    # En-boy oranını bozmadan ölçekle
+    max_h = target_h * scale_ratio
+    max_w = target_w * 0.56
+    scale = min(max_w / cw, max_h / ch)
     
-    if bg_type == "nature_leaves":
-        # Kütüğün üst yüzeyine oturması için horizon_y'nin biraz altına (kütük merkezine) yerleştir
-        py = int(horizon_y + (target_h - horizon_y) * 0.25 - scaled_h)
-    else:
-        py = horizon_y - scaled_h
-        
-    # Yeni kanvas üzerine yapıştır
+    sw = max(20, int(cw * scale))
+    sh = max(20, int(ch * scale))
+    scaled = cropped.resize((sw, sh), Image.LANCZOS)
+    
+    # Konum hesapla
+    px = (target_w - sw) // 2
+    py = int(target_h * y_ratio) - sh
+    
+    # Yeni kanvasa yapıştır
     canvas = Image.new("RGBA", (target_w, target_h), (0, 0, 0, 0))
     canvas.paste(scaled, (px, py))
     
-    new_bbox = (px, py, px + scaled_w, py + scaled_h)
+    new_bbox = (px, py, px + sw, py + sh)
+    logger.info(f"🎯 Ürün hizalandı ({bg_type}): bbox={new_bbox}, scale={scale:.2f}")
     return canvas, new_bbox
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Kusursuz Gölgelendirme (Contact + Ambient Shadows)
+# 3. İki Katmanlı Fiziksel Gölgelendirme (Contact + Ambient)
 # ──────────────────────────────────────────────────────────────────────────────
 
 def create_contact_shadow(
     alpha: Image.Image, bbox: tuple, w: int, h: int,
-    color: tuple = (10, 8, 5), opacity: int = 190
+    color: tuple = (12, 10, 8), opacity: int = 195
 ) -> Image.Image:
-    """Ürünün tam tabanına basan keskin, çok ince kontakt gölgesi."""
+    """
+    Ürünün tam altına, zemine bastığı çizgiye keskin, ince ve koyu
+    bir kontakt gölgesi (contact shadow) ekler.
+    """
     if not bbox:
         return Image.new("RGBA", (w, h), (0, 0, 0, 0))
     left, top, right, bottom = bbox
     pw = right - left
     pcx = (left + right) // 2
     
-    # İnce yayvan elips
+    # Çok ince, basık bir elips
     shadow_h = max(2, h // 110)
-    shadow_w = int(pw * 0.88)
+    shadow_w = int(pw * 0.86)
     
     layer = Image.new("L", (w, h), 0)
     draw = ImageDraw.Draw(layer)
@@ -427,7 +140,7 @@ def create_contact_shadow(
         pcx + shadow_w // 2, bottom + shadow_h
     ], fill=opacity)
     
-    # Çok az blur (gerçekçi keskinlik için)
+    # Hafif kenar yumuşatması (aşırı yapay durmasın diye küçük blur)
     layer = layer.filter(ImageFilter.GaussianBlur(radius=max(1, w // 250)))
     
     result = Image.new("RGBA", (w, h), (*color, 255))
@@ -439,27 +152,30 @@ def create_ambient_shadow(
     color: tuple = (15, 12, 10), opacity: int = 65,
     blur_factor: int = 16
 ) -> Image.Image:
-    """Alt ve arka plana yumuşakça dağılan büyük çevre gölgesi."""
-    # Ürün silüetini dikeyde %55 sıkıştır
+    """
+    Ürünün altına ve arkasına doğru yumuşakça süzülen,
+    dikey daraltılmış ve yoğun Gaussian blur uygulanmış çevre gölgesi (ambient shadow).
+    """
+    # Silüeti dikeyde %55 sıkıştır
     squeezed_h = max(1, int(alpha.size[1] * 0.55))
     squeezed = alpha.resize((w, squeezed_h), Image.LANCZOS)
     
     shadow_mask = Image.new("L", (w, h), 0)
-    # Alt taban seviyesine ve hafif arkaya yerleştir
     bbox = alpha.getbbox()
     if bbox:
         bottom = bbox[3]
+        # Ürünün hemen arkasına düşecek şekilde hafif yukarı-aşağı kaydırma offseti
         offset_y = bottom - squeezed_h + max(2, h // 90)
     else:
         offset_y = h - squeezed_h
         
     shadow_mask.paste(squeezed, (0, offset_y))
     
-    # Geniş Gaussian blur
+    # Geniş Gaussian blur ile yayılım sağla
     blur_r = max(6, w // blur_factor)
     shadow_mask = shadow_mask.filter(ImageFilter.GaussianBlur(radius=blur_r))
     
-    # Opaklık ölçekleme
+    # Opaklığı ayarla
     shadow_mask = shadow_mask.point(lambda x: min(int(x * opacity / 255.0), opacity))
     
     result = Image.new("RGBA", (w, h), (*color, 255))
@@ -467,16 +183,21 @@ def create_ambient_shadow(
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Işık ve Renk Entegrasyonu (Image Blending & Feathering)
+# 4. Işık ve Kenar Entegrasyonu (Feathering & Color Blending)
 # ──────────────────────────────────────────────────────────────────────────────
 
 def feather_edges(product_rgba: Image.Image, radius: float = 1.2) -> Image.Image:
-    """Ürün kenarlarındaki sert pikselleri yumuşatarak arka planla birleştirir."""
+    """
+    Arka planı silinmiş ürünün kenarlarındaki sert kesim izlerini (dekupe hatalarını)
+    hafifçe içeri eriterek pürüzsüzleştirir.
+    """
     r, g, b, a = product_rgba.split()
-    eroded = a.filter(ImageFilter.MinFilter(3)) # 1px içeri daralt
+    # Maskeyi 1px içeri daralt
+    eroded = a.filter(ImageFilter.MinFilter(3))
+    # Bulanıklaştır
     blurred = eroded.filter(ImageFilter.GaussianBlur(radius=radius))
     
-    # Dışarı taşmaması için orijinal maske ile çarp
+    # Orijinal maske dışına taşmayı önlemek için minimumunu al
     feathered = ImageChops.darker(a, blurred)
     return Image.merge("RGBA", [r, g, b, feathered])
 
@@ -484,7 +205,10 @@ def feather_edges(product_rgba: Image.Image, radius: float = 1.2) -> Image.Image
 def apply_environment_tint(
     product_rgba: Image.Image, tint_color: tuple, strength: float = 0.04
 ) -> Image.Image:
-    """Ürüne seçilen temanın ortam rengini hafifçe yedirerek ışık uyumu sağlar."""
+    """
+    Ortamın ışık rengini çantanın üzerine hafif bir filtre olarak uygular.
+    Böylece stüdyo ışığıyla çantanın ışığı mükemmel şekilde eşitlenir.
+    """
     r, g, b, a = product_rgba.split()
     rgb = Image.merge("RGB", [r, g, b])
     tint = Image.new("RGB", product_rgba.size, tint_color)

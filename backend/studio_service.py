@@ -240,7 +240,7 @@ class StudioAIService:
         # 1) Ürünü ideal ölçekte zemin/kütük üzerine yerleştir (Floating YOK EDİLDİ)
         logger.info("  → Ürün konumlandırma ve ölçekleme...")
         placed_product, new_bbox = preprocess_product(
-            product_rgba, w, h, horizon_y, bg_type
+            product_rgba, w, h, bg_type
         )
         
         placed_alpha = placed_product.split()[3]

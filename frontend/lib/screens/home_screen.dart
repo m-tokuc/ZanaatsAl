@@ -18,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _materialController = TextEditingController();
   String? _selectedCategory;
+  bool _isMockMode = true; // Varsayılan olarak sunum modu açık
   XFile? _selectedImage;
 
   Future<void> _pickImage(ImageSource source) async {
@@ -48,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
           description: _descriptionController.text.trim(),
           category: _selectedCategory,
           material: _materialController.text.trim(),
+          isMockMode: _isMockMode,
         ),
       ),
     );
@@ -77,6 +79,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         centerTitle: true,
         actions: [
+          Row(
+            children: [
+              Text('Sunum', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
+              Switch(
+                value: _isMockMode,
+                activeColor: const Color(0xFF4CAF50),
+                onChanged: (val) {
+                  setState(() {
+                    _isMockMode = val;
+                  });
+                },
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.collections_bookmark_outlined, color: Colors.white),
             tooltip: 'Koleksiyonum',
@@ -209,7 +225,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   ),
                   hint: Text('Kategori Seçin', style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14)),
-                  items: ['Çanta & Cüzdan', 'Giyim', 'Takı & Aksesuar', 'Ev Dekorasyonu', 'Sanat & Tablo']
+                  items: [
+                    'Çanta & Cüzdan',
+                    'Giyim & Moda',
+                    'Ayakkabı',
+                    'Takı & Aksesuar',
+                    'Teknoloji Aksesuarları (iPad Kılıfı vb.)',
+                    'Ev & Yaşam',
+                    'Dekorasyon & Sanat',
+                    'Mutfak Gereçleri',
+                    'Kozmetik & Kişisel Bakım',
+                    'Hobi & Oyuncak',
+                    'Diğer'
+                  ]
                       .map((String value) {
                     return DropdownMenuItem<String>(
                       value: value,

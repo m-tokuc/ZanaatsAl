@@ -11,6 +11,7 @@ class LoadingScreen extends StatefulWidget {
   final String? description;
   final String? category;
   final String? material;
+  final bool isMockMode;
 
   const LoadingScreen({
     super.key, 
@@ -18,6 +19,7 @@ class LoadingScreen extends StatefulWidget {
     this.description,
     this.category,
     this.material,
+    this.isMockMode = false,
   });
 
   @override
@@ -57,6 +59,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
         description: widget.description,
         category: widget.category,
         material: widget.material,
+        isMockMode: widget.isMockMode,
       );
 
       // Timer'ı iptal et

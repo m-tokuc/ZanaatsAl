@@ -109,39 +109,111 @@ class _PhotoEnhancementScreenState extends State<PhotoEnhancementScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 30),
-
             // Görsel
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Container(
-                      width: 250,
-                      height: 250,
+                    // Arka Plan Katmanı (Profesyonel Ortam)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 800),
+                      width: 320,
+                      height: 320,
                       decoration: BoxDecoration(
-                        color: _isDone ? _styles[_selectedStyleIndex]['color'] : Colors.transparent,
+                        color: _isDone ? _styles[_selectedStyleIndex]['color'] : const Color(0xFF151916),
+                        boxShadow: _isDone ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          )
+                        ] : [],
+                        gradient: _isDone ? RadialGradient(
+                          center: Alignment.center,
+                          radius: 1.0,
+                          colors: [
+                            _styles[_selectedStyleIndex]['color'].withOpacity(0.6),
+                            _styles[_selectedStyleIndex]['color'],
+                          ],
+                        ) : null,
                       ),
-                      child: kIsWeb
-                          ? Image.network(widget.imageFile.path, fit: BoxFit.contain)
-                          : Image.file(File(widget.imageFile.path), fit: BoxFit.contain),
+                      child: _isDone ? CustomPaint(
+                        painter: StudioReflectionPainter(),
+                      ) : null,
                     ),
+                    
+                    // Ürün Katmanı (Soft Edge Blending)
+                    ShaderMask(
+                      shaderCallback: (rect) {
+                        return RadialGradient(
+                          center: Alignment.center,
+                          radius: 0.8,
+                          colors: [
+                            Colors.black,
+                            _isDone ? Colors.transparent : Colors.black,
+                          ],
+                          stops: const [0.6, 1.0],
+                        ).createShader(rect);
+                      },
+                      blendMode: BlendMode.dstIn,
+                      child: ColorFiltered(
+                        colorFilter: _isDone 
+                          ? const ColorFilter.matrix([
+                              1.1, 0, 0, 0, 15,
+                              0, 1.1, 0, 0, 15,
+                              0, 0, 1.1, 0, 15,
+                              0, 0, 0, 1, 0,
+                            ]) 
+                          : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                        child: Container(
+                          width: 250,
+                          height: 250,
+                          padding: const EdgeInsets.all(10),
+                          child: kIsWeb
+                              ? Image.network(widget.imageFile.path, fit: BoxFit.contain)
+                              : Image.file(File(widget.imageFile.path), fit: BoxFit.contain),
+                        ),
+                      ),
+                    ),
+
+                    // İşleme Katmanı
                     if (_isProcessing)
                       Container(
-                        width: 250,
-                        height: 250,
-                        color: Colors.black.withOpacity(0.6),
-                        child: const Center(
-                          child: CircularProgressIndicator(color: Colors.purpleAccent),
+                        width: 320,
+                        height: 320,
+                        color: Colors.black.withOpacity(0.7),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const CircularProgressIndicator(color: Colors.purpleAccent),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Arka Plan Siliniyor ve\nIşıklandırma Ayarlanıyor...',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
+                            ),
+                          ],
                         ),
                       ),
                   ],
                 ),
               ),
             ),
-
+            const SizedBox(height: 12),
+            if (_isDone)
+              Center(
+                child: Text(
+                  '✨ Profesyonel Stüdyo Çekimi Hazır!',
+                  style: GoogleFonts.poppins(
+                    color: Colors.greenAccent,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             const SizedBox(height: 30),
 
             Text(
@@ -268,4 +340,39 @@ class _PhotoEnhancementScreenState extends State<PhotoEnhancementScreen> {
       ),
     );
   }
+}
+
+class StudioReflectionPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.white.withOpacity(0.1),
+          Colors.white.withOpacity(0.0),
+          Colors.black.withOpacity(0.05),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+    
+    // Add a light streak
+    final streakPaint = Paint()
+      ..color = Colors.white.withOpacity(0.05)
+      ..style = PaintingStyle.fill;
+    
+    final path = Path()
+      ..moveTo(size.width * 0.2, 0)
+      ..lineTo(size.width * 0.5, 0)
+      ..lineTo(size.width * 0.3, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+      
+    canvas.drawPath(path, streakPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

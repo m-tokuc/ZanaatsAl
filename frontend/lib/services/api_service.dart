@@ -9,7 +9,7 @@ class ApiService {
   // Eğer web uygulaması localhost'ta çalışıyorsa yerel backend'e bağlansın.
   // Değilse ngrok bağlantısına yönlensin.
   static String get _baseUrl {
-    if (kIsWeb && Uri.base.host == 'localhost') {
+    if (kIsWeb && (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1')) {
       return 'http://localhost:8000';
     }
     return 'https://contemptibly-septemviral-apollo.ngrok-free.dev';
