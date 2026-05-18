@@ -36,17 +36,17 @@ app.add_middleware(
 # Initialize orchestrator
 try:
     orchestrator = ZanaatsAlOrchestrator()
-    print("✅ ZanaatsAl Orkestratör başarıyla yüklendi")
+    print("[OK] ZanaatsAl Orkestrator basariyla yuklendi")
 except Exception as e:
-    print(f"❌ Orkestratör yüklenemedi: {str(e)}")
+    print(f"[ERROR] Orkestrator yuklenemedi: {str(e)}")
     orchestrator = None
 
 # Initialize Studio AI Service
 try:
     studio_service = StudioAIService()
-    print("✅ Studio AI Servisi başarıyla yüklendi")
+    print("[OK] Studio AI Servisi basariyla yuklendi")
 except Exception as e:
-    print(f"❌ Studio AI Servisi yüklenemedi: {str(e)}")
+    print(f"[ERROR] Studio AI Servisi yuklenemedi: {str(e)}")
     studio_service = None
 
 @app.get("/")

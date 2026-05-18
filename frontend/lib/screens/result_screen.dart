@@ -20,7 +20,6 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
-  bool _showEnglishDescription = false;
   bool _isSaving = false;
 
   void _copyToClipboard(BuildContext context, String text) {
@@ -158,10 +157,11 @@ class _ResultScreenState extends State<ResultScreen> {
     final trFiyat = getDeepValue(exportStrategy, ['fiyatlandirma_stratejisi', 'tr_fiyat_tl']);
     final globalFiyat = getDeepValue(exportStrategy, ['fiyatlandirma_stratejisi', 'global_fiyat_usd']);
     
-    // Açıklamalar
-    final aciklamaTr = getDeepValue(exportStrategy, ['pazarlama_ve_icerik', 'urun_aciklamasi_tr']);
-    final aciklamaEn = getDeepValue(exportStrategy, ['pazarlama_ve_icerik', 'urun_aciklamasi_en']);
-    final currentAciklama = _showEnglishDescription ? aciklamaEn : aciklamaTr;
+    // Marketing Hook
+    final marketingHook = getDeepValue(exportStrategy, ['marketing_hook'], 'Marketing hook could not be generated.');
+    
+    // Social Media Post
+    final socialMediaPost = getDeepValue(exportStrategy, ['suggested_social_media_post'], 'Social media post could not be generated.');
     
     // Pazar ve SEO
     final trPlatformlar = getDeepValue(exportStrategy, ['pazar_ve_seo', 'tr_stratejisi', 'platformlar']);
@@ -277,36 +277,19 @@ class _ResultScreenState extends State<ResultScreen> {
                     ),
                   ),
 
-                  // Bilingual Description Card
+                  // Marketing Hook Card
                   _buildGlassCard(
-                    title: 'Satış Açıklaması',
-                    icon: Icons.description_outlined,
+                    title: 'Marketing Hook',
+                    icon: Icons.campaign_outlined,
                     iconColor: Colors.purpleAccent,
-                    copyText: currentAciklama,
-                    trailingAction: TextButton.icon(
-                      icon: const Icon(Icons.g_translate, size: 18, color: Colors.white),
-                      label: Text(_showEnglishDescription ? 'TR' : 'EN', style: GoogleFonts.poppins(color: Colors.white)),
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.purpleAccent.withOpacity(0.2),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _showEnglishDescription = !_showEnglishDescription;
-                        });
-                      },
-                    ),
-                    content: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: Text(
-                        currentAciklama,
-                        key: ValueKey<bool>(_showEnglishDescription),
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          color: Colors.grey[300],
-                          height: 1.6,
-                        ),
+                    copyText: marketingHook,
+                    content: Text(
+                      marketingHook,
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        color: Colors.grey[300],
+                        height: 1.6,
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
                   ),
@@ -343,6 +326,22 @@ class _ResultScreenState extends State<ResultScreen> {
                           const TextSpan(text: 'SEO Kelimeleri: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                           TextSpan(text: globalSeo),
                         ],
+                      ),
+                    ),
+                  ),
+
+                  // Social Media Agent Card
+                  _buildGlassCard(
+                    title: 'Sosyal Medya Paylaşım Metni (Agentic)',
+                    icon: Icons.share,
+                    iconColor: Colors.pinkAccent,
+                    copyText: socialMediaPost,
+                    content: Text(
+                      socialMediaPost,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.grey[300],
+                        height: 1.6,
                       ),
                     ),
                   ),

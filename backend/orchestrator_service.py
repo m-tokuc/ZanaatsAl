@@ -150,6 +150,9 @@ class ZanaatsAlOrchestrator:
         - KULLANICI BEYANINA SADIK KAL: Eğer kullanıcı Materyal veya Kategori belirtmişse, görsel analizinde farklı bir şey görsen bile KULLANICININ BEYANINI (Silikon, Deri vb.) esas alarak strateji kur.
         - HİKAYEYE ODAKLAN: Kullanıcının "Satıcı Açıklaması" kısmında verdiği ürün hikayesini, emeğini ve detaylarını fiyatlandırma mantığında ve pazarlama mesajlarında (Açıklama TR/EN) mutlaka kullan.
         - ANALİZ DERİNLİĞİ: Ürünün hem TR hem Global pazar için en gerçekçi SEO ve fiyat analizini yap.
+        - DİL VE İKNA (METİN YAZARLIĞI): Sadece kelime çevirisi yapma. Ana dili İngilizce olan uzman bir ABD'li e-ticaret metin yazarı gibi davran. Etsy ve Amazon müşterilerini satın almaya ikna edecek, son derece doğal, akıcı ve 'native' bir dil kullan.
+        - ÇEVİRİ VE İÇERİK: Eğer kullanıcının sağladığı bir Türkçe açıklama varsa, o açıklamayı 'marketing_hook' ve 'suggested_description' alanlarını oluşturmak için bir kaynak olarak kullan. Ancak nihai JSON çıktısındaki hiçbir alanda kullanıcının sağladığı Türkçe metni olduğu gibi döndürme. Tüm çıktılar native, akıcı İngilizce olmalı.
+        - SOSYAL MEDYA AJANI: Bu ürün için profesyonel, ABD'li bir e-ticaret metin yazarı gibi davran ve 1 adet native İngilizce Instagram gönderi metni hazırla. Metin ikna edici, emojili ve ABD pazarında trend olan en az 10 adet ilgili İngilizce hashtag'i içermelidir.
         
         === ÜRÜN VİZYON ANALİZİ VE KULLANICI VERİLERİ ===
         Kategori (Yapay Zeka): {vision_data.get('kategori', 'N/A')}
@@ -179,6 +182,10 @@ class ZanaatsAlOrchestrator:
         JSON formatında şu alanları içeren kapsamlı bir strateji hazırla:
         
         {{
+            "marketing_hook": "A catchy, short English marketing hook based on the user's story",
+            "suggested_title": "Optimized English product title for Etsy/Amazon",
+            "suggested_description": "Native English, highly persuasive product description based on user input",
+            "suggested_social_media_post": "Native English Instagram post with emojis and 10+ hashtags",
             "urun_pozisyonlandirma": {{
                 "benzersiz_deger_oneri": "Ürünün benzersiz satış noktası",
                 "hedef_pazar_segmenti": "Odaklanılacak pazar segmenti"

@@ -18,6 +18,7 @@ import base64
 import logging
 from typing import Optional, Dict
 
+# pyrefly: ignore [missing-import]
 from PIL import Image, ImageFilter
 from rembg import remove as rembg_remove
 from dotenv import load_dotenv
@@ -147,7 +148,9 @@ def _build_inpainting_prompt(bg_type: str) -> str:
         "CRITICAL: Do NOT modify the product's shape, color, texture, "
         "stitching, or any detail. The result must look like a real studio "
         "photograph, indistinguishable from an actual photo shoot. "
-        "Add a realistic contact shadow where the product touches the surface."
+        "Apply photorealistic lighting adjustments to seamlessly blend the product into the new background. "
+        "Generate soft, realistic contact shadows that ground the object perfectly on the surface. "
+        "Ensure there is no gap between the object and its generated shadow to eliminate the floating effect."
     )
 
 
