@@ -17,8 +17,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _materialController = TextEditingController();
-  String? _selectedCategory;
-  bool _isMockMode = true; // Varsayılan olarak sunum modu açık
+  String? _selectedCategory; // Kategori seçim değişkeni
+  final bool _isMockMode = true; // Varsayılan olarak sunum modu açık kalıyor
   XFile? _selectedImage;
 
   Future<void> _pickImage(ImageSource source) async {
@@ -79,20 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         centerTitle: true,
         actions: [
-          Row(
-            children: [
-              Text('Sunum', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
-              Switch(
-                value: _isMockMode,
-                activeColor: const Color(0xFF4CAF50),
-                onChanged: (val) {
-                  setState(() {
-                    _isMockMode = val;
-                  });
-                },
-              ),
-            ],
-          ),
           IconButton(
             icon: const Icon(Icons.collections_bookmark_outlined, color: Colors.white),
             tooltip: 'Koleksiyonum',
@@ -272,10 +258,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: TextField(
                   controller: _materialController,
-                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontFamily: 'Roboto'),
                   decoration: InputDecoration(
                     hintText: 'Örn: Hakiki Deri, Pamuk, Epoksi, Ahşap...',
-                    hintStyle: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14),
+                    hintStyle: TextStyle(color: Colors.grey[600], fontSize: 14, fontFamily: 'Roboto'),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
@@ -303,13 +289,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: TextField(
                   controller: _descriptionController,
-                  maxLines: 4,
-                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+                  maxLines: 1,
+                  keyboardType: TextInputType.text,
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontFamily: 'Roboto'),
                   decoration: InputDecoration(
-                    hintText: "Örn: 1980'lerden esinlenilmiş, tamamen el dikişi, sürdürülebilir malzemelerle üretilmiş minimalist cüzdan...",
-                    hintStyle: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14),
+                    hintText: "Örn: 1980'lerden esinlenilmiş, el dikişi minimalist cüzdan...",
+                    hintStyle: TextStyle(color: Colors.grey[600], fontSize: 14, fontFamily: 'Roboto'),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(16),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                 ),
               ),

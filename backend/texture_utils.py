@@ -65,7 +65,13 @@ def preprocess_product(
     hizalayıp yerleştirir. Havada durma/asılı kalma görüntüsünü tamamen YOK eder.
     """
     alpha = product_rgba.split()[3]
-    bbox = alpha.getbbox()
+    
+    # Transparan kirli piksellerin (rembg kalıntıları) hizalamayı bozmasını önlemek için 
+    # alfa değeri 35'ten büyük olan piksellere göre akıllı bbox hesapla
+    mask = alpha.point(lambda p: 255 if p > 35 else 0)
+    bbox = mask.getbbox()
+    if not bbox:
+        bbox = alpha.getbbox()
     if not bbox:
         return product_rgba, (0, 0, target_w, target_h)
         
@@ -75,31 +81,33 @@ def preprocess_product(
     
     # Şablon bazlı hizalama ve ölçek katsayıları
     # y_ratio: Ürünün alt kenarının oturacağı zemin yükseklik oranı (0.0 - 1.0)
+    # x_ratio: Ürünün yatayda yerleşeceği merkez oranı (0.0 - 1.0)
     # scale_ratio: Ürünün dikeyde sahneye oranla kaplayacağı ideal yükseklik payı
     alignments = {
-        "studio_white": {"y_ratio": 0.62, "scale_ratio": 0.52},
-        "rustic_wood": {"y_ratio": 0.56, "scale_ratio": 0.48},     # Ahşap masanın üst yüzeyi
-        "minimal_marble": {"y_ratio": 0.54, "scale_ratio": 0.46},   # Mermer tezgahın üst yüzeyi
-        "modern_concrete": {"y_ratio": 0.52, "scale_ratio": 0.46},  # Beton bloğun üst yüzeyi
-        "nature_leaves": {"y_ratio": 0.64, "scale_ratio": 0.38},    # Kütüğün (log slice) üst yüzeyi
-        "premium_black": {"y_ratio": 0.65, "scale_ratio": 0.42},    # Premium siyah bloğun üst yüzeyi
+        "studio_white": {"y_ratio": 0.74, "scale_ratio": 0.55, "x_ratio": 0.50},
+        "rustic_wood": {"y_ratio": 0.76, "scale_ratio": 0.50, "x_ratio": 0.47},     # Ahşap masanın açısına göre hafif sol-merkez
+        "minimal_marble": {"y_ratio": 0.74, "scale_ratio": 0.48, "x_ratio": 0.50},   # Mermer tezgahın üst yüzeyi
+        "modern_concrete": {"y_ratio": 0.72, "scale_ratio": 0.48, "x_ratio": 0.42},  # Beton bloğun tam üst düzlüğüne (sola) otursun
+        "nature_leaves": {"y_ratio": 0.75, "scale_ratio": 0.42, "x_ratio": 0.50},    # Kütüğün (log slice) üst yüzeyi
+        "premium_black": {"y_ratio": 0.76, "scale_ratio": 0.45, "x_ratio": 0.50},    # Premium siyah bloğun üst yüzeyi
     }
     
     align = alignments.get(bg_type, alignments["studio_white"])
     y_ratio = align["y_ratio"]
+    x_ratio = align.get("x_ratio", 0.50)
     scale_ratio = align["scale_ratio"]
     
     # En-boy oranını bozmadan ölçekle
     max_h = target_h * scale_ratio
-    max_w = target_w * 0.56
+    max_w = target_w * 0.52
     scale = min(max_w / cw, max_h / ch)
     
     sw = max(20, int(cw * scale))
     sh = max(20, int(ch * scale))
     scaled = cropped.resize((sw, sh), Image.LANCZOS)
     
-    # Konum hesapla
-    px = (target_w - sw) // 2
+    # Konum hesapla (x_ratio ile dinamik yatay hizalama)
+    px = int(target_w * x_ratio) - sw // 2
     py = int(target_h * y_ratio) - sh
     
     # Yeni kanvasa yapıştır
@@ -107,7 +115,7 @@ def preprocess_product(
     canvas.paste(scaled, (px, py))
     
     new_bbox = (px, py, px + sw, py + sh)
-    logger.info(f"🎯 Ürün hizalandı ({bg_type}): bbox={new_bbox}, scale={scale:.2f}")
+    logger.info(f"🎯 Ürün hizalandı ({bg_type}): bbox={new_bbox}, scale={scale:.2f}, x_ratio={x_ratio}")
     return canvas, new_bbox
 
 
@@ -123,15 +131,21 @@ def create_contact_shadow(
     Ürünün tam altına, zemine bastığı çizgiye keskin, ince ve koyu
     bir kontakt gölgesi (contact shadow) ekler.
     """
-    if not bbox:
+    # Transparan kirli pikselleri eleyerek tam temizlenmiş alt sınırı bul
+    clean_alpha = alpha.point(lambda p: 255 if p > 35 else 0)
+    clean_bbox = clean_alpha.getbbox()
+    if not clean_bbox:
+        clean_bbox = bbox
+    if not clean_bbox:
         return Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    left, top, right, bottom = bbox
+        
+    left, top, right, bottom = clean_bbox
     pw = right - left
     pcx = (left + right) // 2
     
     # Çok ince, basık bir elips
     shadow_h = max(2, h // 110)
-    shadow_w = int(pw * 0.86)
+    shadow_w = int(pw * 0.88)
     
     layer = Image.new("L", (w, h), 0)
     draw = ImageDraw.Draw(layer)
@@ -141,7 +155,7 @@ def create_contact_shadow(
     ], fill=opacity)
     
     # Hafif kenar yumuşatması (aşırı yapay durmasın diye küçük blur)
-    layer = layer.filter(ImageFilter.GaussianBlur(radius=max(1, w // 250)))
+    layer = layer.filter(ImageFilter.GaussianBlur(radius=max(1, w // 220)))
     
     result = Image.new("RGBA", (w, h), (*color, 255))
     return Image.merge("RGBA", [*result.split()[:3], layer])
@@ -156,23 +170,26 @@ def create_ambient_shadow(
     Ürünün altına ve arkasına doğru yumuşakça süzülen,
     dikey daraltılmış ve yoğun Gaussian blur uygulanmış çevre gölgesi (ambient shadow).
     """
-    # Silüeti dikeyde %55 sıkıştır
-    squeezed_h = max(1, int(alpha.size[1] * 0.55))
-    squeezed = alpha.resize((w, squeezed_h), Image.LANCZOS)
+    # Transparan kirli pikselleri temizle
+    clean_alpha = alpha.point(lambda p: 255 if p > 35 else 0)
+    
+    # Silüeti dikeyde %50 sıkıştır
+    squeezed_h = max(1, int(clean_alpha.size[1] * 0.50))
+    squeezed = clean_alpha.resize((w, squeezed_h), Image.LANCZOS)
     
     shadow_mask = Image.new("L", (w, h), 0)
-    bbox = alpha.getbbox()
+    bbox = clean_alpha.getbbox()
     if bbox:
         bottom = bbox[3]
-        # Ürünün hemen arkasına düşecek şekilde hafif yukarı-aşağı kaydırma offseti
-        offset_y = bottom - squeezed_h + max(2, h // 90)
+        # Ürünün hemen arkasına düşecek şekilde milimetrik hizalı kaydırma offseti
+        offset_y = bottom - squeezed_h + max(1, h // 180)
     else:
         offset_y = h - squeezed_h
         
     shadow_mask.paste(squeezed, (0, offset_y))
     
     # Geniş Gaussian blur ile yayılım sağla
-    blur_r = max(6, w // blur_factor)
+    blur_r = max(5, w // blur_factor)
     shadow_mask = shadow_mask.filter(ImageFilter.GaussianBlur(radius=blur_r))
     
     # Opaklığı ayarla
@@ -189,28 +206,87 @@ def create_ambient_shadow(
 def feather_edges(product_rgba: Image.Image, radius: float = 1.2) -> Image.Image:
     """
     Arka planı silinmiş ürünün kenarlarındaki sert kesim izlerini (dekupe hatalarını)
-    hafifçe içeri eriterek pürüzsüzleştirir.
+    hafifçe içeri eriterek pürüzsüzleştirir. Ürünün alt kısmını (zemine basan tarafı)
+    masanın/kütüğün bokeh/DoF (alan derinliği) seviyesiyle bütünleşecek şekilde ekstra yumuşatır.
     """
     r, g, b, a = product_rgba.split()
-    # Maskeyi 1px içeri daralt
-    eroded = a.filter(ImageFilter.MinFilter(3))
-    # Bulanıklaştır
-    blurred = eroded.filter(ImageFilter.GaussianBlur(radius=radius))
     
-    # Orijinal maske dışına taşmayı önlemek için minimumunu al
+    # Genel kenar yumuşatma
+    eroded = a.filter(ImageFilter.MinFilter(3))
+    blurred = eroded.filter(ImageFilter.GaussianBlur(radius=radius))
     feathered = ImageChops.darker(a, blurred)
-    return Image.merge("RGBA", [r, g, b, feathered])
+    
+    # Taban geçiş yumuşatma (DoF Entegrasyonu):
+    # Ürünün alt %15'lik kısmını zemine yedirmek için degrade yumuşatma maskesi uygula
+    w, h = product_rgba.size
+    mask = Image.new("L", (w, h), 255)
+    draw = ImageDraw.Draw(mask)
+    
+    # Alt tarafta yumuşak bir dikey degrade maske oluştur
+    bbox = feathered.getbbox()
+    if bbox:
+        bottom = bbox[3]
+        fade_start = int(bottom - h * 0.08)
+        for y in range(fade_start, bottom + 1):
+            if y >= h or y < 0:
+                continue
+            factor = (y - fade_start) / max(1, bottom - fade_start)
+            # Alt kenara yaklaştıkça hafif şeffaflık erimesi (blend)
+            val = int(255 - factor * 45)
+            draw.line([(0, y), (w, y)], fill=val)
+            
+    final_alpha = ImageChops.darker(feathered, mask)
+    
+    # Alt kenarı ekstradan çok hafif Gaussian blur ile odağa uydur
+    base_product = Image.merge("RGBA", [r, g, b, final_alpha])
+    bottom_blur = base_product.filter(ImageFilter.GaussianBlur(radius=0.85))
+    
+    # Sadece alt kısımları bulanık olanla değiştir
+    if bbox:
+        bottom = bbox[3]
+        fade_start = int(bottom - h * 0.06)
+        gradient_mask = Image.new("L", (w, h), 0)
+        g_draw = ImageDraw.Draw(gradient_mask)
+        for y in range(fade_start, bottom + 1):
+            if y >= h or y < 0:
+                continue
+            factor = (y - fade_start) / max(1, bottom - fade_start)
+            val = int(factor * 255)
+            g_draw.line([(0, y), (w, y)], fill=val)
+        return Image.composite(bottom_blur, base_product, gradient_mask)
+        
+    return base_product
 
 
 def apply_environment_tint(
     product_rgba: Image.Image, tint_color: tuple, strength: float = 0.04
 ) -> Image.Image:
     """
-    Ortamın ışık rengini çantanın üzerine hafif bir filtre olarak uygular.
-    Böylece stüdyo ışığıyla çantanın ışığı mükemmel şekilde eşitlenir.
+    Ortamın ışık rengini, parlaklığını ve kontrastını ürünün üzerine akıllıca yedirir.
+    Böylece ürün stüdyo ışığıyla mükemmel şekilde kaynaşarak "gerçekten oradaymış" gibi durur.
     """
     r, g, b, a = product_rgba.split()
     rgb = Image.merge("RGB", [r, g, b])
+    
+    # 1) Ortam Renk Entegrasyonu (Tinting)
     tint = Image.new("RGB", product_rgba.size, tint_color)
-    blended = Image.blend(rgb, tint, strength)
-    return Image.merge("RGBA", [*blended.split(), a])
+    blended_rgb = Image.blend(rgb, tint, strength)
+    
+    # 2) Gelişmiş Ortam Kontrastı ve Sıcaklığı (PIL ImageEnhance ile)
+    from PIL import ImageEnhance
+    
+    # Ahşap/Doğa gibi sıcak/loş ortamlarda kontrastı hafifçe yumuşat ve renkleri ısıt
+    # (Bu sayede yapay parlaklık ve keskin stüdyo flaşı hissi ortadan kalkar)
+    brightness_enhancer = ImageEnhance.Brightness(blended_rgb)
+    # Çok hafif loşlaştırma (ortam ışığına entegre)
+    blended_rgb = brightness_enhancer.enhance(0.97)
+    
+    contrast_enhancer = ImageEnhance.Contrast(blended_rgb)
+    # Kontrastı %8 yumuşatarak yapay montaj görünümünü sil
+    blended_rgb = contrast_enhancer.enhance(0.92)
+    
+    color_enhancer = ImageEnhance.Color(blended_rgb)
+    # Sıcak tonları desteklemek için doygunluğu milimetrik artır
+    blended_rgb = color_enhancer.enhance(1.03)
+    
+    return Image.merge("RGBA", [*blended_rgb.split(), a])

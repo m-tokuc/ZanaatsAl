@@ -93,22 +93,99 @@ async def analyze_product(
         user_material = material if material else "Özel Malzeme"
         user_desc = description if description else "Kaliteli ve şık bir tasarım."
         
-        # Dinamik Fiyatlandırma Motoru (Mock/Sunum Modu için)
-        cat_prices = {
-            'Çanta & Cüzdan': ('1,200.00 TL - 2,400.00 TL', '45.00 USD - 85.00 USD'),
-            'Giyim & Moda': ('850.00 TL - 1,950.00 TL', '35.00 USD - 75.00 USD'),
-            'Ayakkabı': ('1,800.00 TL - 3,800.00 TL', '65.00 USD - 140.00 USD'),
-            'Takı & Aksesuar': ('350.00 TL - 950.00 TL', '15.00 USD - 40.00 USD'),
-            'Teknoloji Aksesuarları (iPad Kılıfı vb.)': ('750.00 TL - 1,600.00 TL', '28.00 USD - 60.00 USD'),
-            'Ev & Yaşam': ('900.00 TL - 2,800.00 TL', '35.00 USD - 100.00 USD'),
-            'Dekorasyon & Sanat': ('1,500.00 TL - 5,500.00 TL', '55.00 USD - 200.00 USD'),
-            'Mutfak Gereçleri': ('450.00 TL - 1,400.00 TL', '18.00 USD - 50.00 USD'),
-            'Kozmetik & Kişisel Bakım': ('300.00 TL - 850.00 TL', '12.00 USD - 32.00 USD'),
-            'Hobi & Oyuncak': ('400.00 TL - 1,200.00 TL', '15.00 USD - 45.00 USD'),
-            'Diğer': ('500.00 TL - 1,500.00 TL', '20.00 USD - 60.00 USD')
+        # Gelişmiş Dinamik ve Akıllı Fiyatlandırma Motoru (Zanaatkar AI Fiyatlandırma Simülatörü v2.0)
+        base_prices = {
+            'Çanta & Cüzdan': (1500, 55),
+            'Giyim & Moda': (1000, 38),
+            'Ayakkabı': (2000, 75),
+            'Takı & Aksesuar': (600, 22),
+            'Teknoloji Aksesuarları (iPad Kılıfı vb.)': (900, 32),
+            'Ev & Yaşam': (1100, 40),
+            'Dekorasyon & Sanat': (1600, 60),
+            'Mutfak Gereçleri': (550, 20),
+            'Kozmetik & Kişisel Bakım': (450, 16),
+            'Hobi & Oyuncak': (500, 18),
+            'Diğer': (700, 25)
         }
         
-        tr_price, global_price = cat_prices.get(category if category else 'Diğer', ('600.00 TL - 1,800.00 TL', '25.00 USD - 70.00 USD'))
+        cat_key = category if category else 'Diğer'
+        base_tl, base_usd = base_prices.get(cat_key, (700, 25))
+        
+        # 1) Zenginleştirilmiş Materyal, Teknik ve Zanaat Duyarlılık Çarpanları
+        multiplier = 1.0
+        text_to_search = f"{user_material} {user_desc} {cat_key}".lower()
+        
+        # [Kategori A: Ultra Lüks Metallar & Değerli Taşlar]
+        if any(w in text_to_search for w in ["pırlanta", "diamond", "elmas"]):
+            multiplier *= 7.0
+        elif any(w in text_to_search for w in ["altın", "gold", "yakut", "safir", "zümrüt", "emerald", "ruby", "sapphire", "platin", "platinum"]):
+            multiplier *= 5.8
+        elif any(w in text_to_search for w in ["gümüş", "silver", "inci", "pearl", "kehribar", "amber"]):
+            multiplier *= 2.3
+        elif any(w in text_to_search for w in ["bronz", "bronze", "pirinç", "brass"]):
+            multiplier *= 1.25
+            
+        # [Kategori B: Premium Kumaşlar & Doğal Malzemeler]
+        if any(w in text_to_search for w in ["kaşmir", "cashmere", "ipek", "silk"]):
+            multiplier *= 2.5
+        elif any(w in text_to_search for w in ["deri", "leather", "süet", "suede"]):
+            multiplier *= 1.55
+        elif any(w in text_to_search for w in ["mermer", "marble", "granit"]):
+            multiplier *= 1.85
+        elif any(w in text_to_search for w in ["ahşap", "wood", "meşe", "oak", "ceviz", "walnut", "epoksi", "epoxy"]):
+            multiplier *= 1.35
+        elif any(w in text_to_search for w in ["cam", "glass", "seramik", "ceramic", "porselen", "porcelain"]):
+            multiplier *= 1.45
+            
+        # [Kategori C: Zanaat ve Geleneksel Türk Üretim Teknikleri]
+        if any(w in text_to_search for w in ["telkari", "filigree"]):
+            multiplier *= 2.6  # Geleneksel telkari çok ince işçilik gerektirir
+        elif any(w in text_to_search for w in ["çini", "tile", "ebru", "marbling"]):
+            multiplier *= 2.0  # Geleneksel boyama/çini sanatı
+        elif any(w in text_to_search for w in ["oyma", "carving", "üfleme", "blown"]):
+            multiplier *= 1.5
+        elif any(w in text_to_search for w in ["el yapımı", "el emeği", "handmade", "handcrafted", "artisan", "knitted", "örgü"]):
+            multiplier *= 1.35
+            
+        # [Kategori D: Tarih, Antika & Müze Değeri]
+        if any(w in text_to_search for w in ["müze", "museum", "tarihi", "historical", "saray", "palace"]):
+            multiplier *= 3.8
+        elif any(w in text_to_search for w in ["antika", "antique", "vintage", "retro", "1900", "1800", "osmanlı", "ottoman"]):
+            multiplier *= 3.0
+            
+        # [Kategori E: Sınırlı Üretim & İmza Koleksiyonlar]
+        if any(w in text_to_search for w in ["özel tasarım", "limited", "koleksiyon", "special", "unique", "imzalı", "signed"]):
+            multiplier *= 1.45
+            
+        # [Kategori F: Detaylı Hikaye Anlatımı Primi]
+        # Eğer ürünün hikayesi uzunsa ve marka değeri yüksekse ekstra değer çarpanı uygulanır
+        if len(user_desc) > 120:
+            multiplier *= 1.18
+        elif len(user_desc) > 60:
+            multiplier *= 1.08
+            
+        # Çarpanları uygula
+        calc_tl = base_tl * multiplier
+        calc_usd = base_usd * multiplier
+        
+        # 3) Her ürüne özel benzersiz imza sapması (Metin içeriğine göre milimetrik benzersiz kaymalar)
+        # Deterministic olarak her benzersiz metin girdisine özgün, tutarlı bir fiyat aralığı üretir
+        text_hash = sum(ord(c) for c in text_to_search) % 50
+        variation_tl = (text_hash - 25) * (calc_tl * 0.008) # %12 civarı kontrollü salınım
+        variation_usd = (text_hash - 25) * (calc_usd * 0.008)
+        
+        final_tl = max(180, calc_tl + variation_tl)
+        final_usd = max(10, calc_usd + variation_usd)
+        
+        # Gerçekçi fiyat aralığı (%15 alt ve %15 üst limitler)
+        tl_low = int(final_tl * 0.85)
+        tl_high = int(final_tl * 1.15)
+        usd_low = int(final_usd * 0.85)
+        usd_high = int(final_usd * 1.15)
+        
+        # Profesyonel Türkçe binlik ayraçlı formatlama (Örn: 1.200 TL)
+        tr_price = f"{tl_low:,} TL - {tl_high:,} TL".replace(",", ".")
+        global_price = f"{usd_low:,} USD - {usd_high:,} USD".replace(",", ".")
 
         return JSONResponse(
             status_code=200,
