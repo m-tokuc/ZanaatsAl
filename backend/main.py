@@ -185,7 +185,8 @@ async def analyze_product(
         
         # Profesyonel Türkçe binlik ayraçlı formatlama (Örn: 1.200 TL)
         tr_price = f"{tl_low:,} TL - {tl_high:,} TL".replace(",", ".")
-        global_price = f"{usd_low:,} USD - {usd_high:,} USD".replace(",", ".")
+        # Profesyonel İngilizce binlik ayraçlı formatlama (Örn: 1,200 USD)
+        global_price = f"{usd_low:,} USD - {usd_high:,} USD"
 
         return JSONResponse(
             status_code=200,
