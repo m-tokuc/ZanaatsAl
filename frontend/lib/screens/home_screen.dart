@@ -180,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1B5E20).withOpacity(0.2),
+                                color: const Color(0xFF1B5E20).withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.cloud_upload_outlined, size: 40, color: Color(0xFF4CAF50)),
@@ -330,7 +330,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   boxShadow: _selectedImage != null
                       ? [
                           BoxShadow(
-                            color: const Color(0xFF1B5E20).withOpacity(0.4),
+                            color: const Color(0xFF1B5E20).withValues(alpha: 0.4),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           )

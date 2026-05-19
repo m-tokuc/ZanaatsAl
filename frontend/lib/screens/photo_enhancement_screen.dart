@@ -91,9 +91,9 @@ class _PhotoEnhancementScreenState extends State<PhotoEnhancementScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B5E20).withOpacity(0.2),
+                color: const Color(0xFF1B5E20).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF1B5E20).withOpacity(0.5)),
+                border: Border.all(color: const Color(0xFF1B5E20).withValues(alpha: 0.5)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +126,7 @@ class _PhotoEnhancementScreenState extends State<PhotoEnhancementScreen> {
                         color: _isDone ? _styles[_selectedStyleIndex]['color'] : const Color(0xFF151916),
                         boxShadow: _isDone ? [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 20,
                             spreadRadius: 5,
                           )
@@ -135,7 +135,7 @@ class _PhotoEnhancementScreenState extends State<PhotoEnhancementScreen> {
                           center: Alignment.center,
                           radius: 1.0,
                           colors: [
-                            _styles[_selectedStyleIndex]['color'].withOpacity(0.6),
+                            _styles[_selectedStyleIndex]['color'].withValues(alpha: 0.6),
                             _styles[_selectedStyleIndex]['color'],
                           ],
                         ) : null,
@@ -184,7 +184,7 @@ class _PhotoEnhancementScreenState extends State<PhotoEnhancementScreen> {
                       Container(
                         width: 320,
                         height: 320,
-                        color: Colors.black.withOpacity(0.7),
+                        color: Colors.black.withValues(alpha: 0.7),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -248,7 +248,7 @@ class _PhotoEnhancementScreenState extends State<PhotoEnhancementScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF6A1B9A).withOpacity(0.3) : const Color(0xFF151916),
+                      color: isSelected ? const Color(0xFF6A1B9A).withValues(alpha: 0.3) : const Color(0xFF151916),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected ? Colors.purpleAccent : const Color(0xFF2E332F),
@@ -301,7 +301,7 @@ class _PhotoEnhancementScreenState extends State<PhotoEnhancementScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.2),
+                      color: Colors.green.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -350,9 +350,9 @@ class StudioReflectionPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          Colors.white.withOpacity(0.1),
-          Colors.white.withOpacity(0.0),
-          Colors.black.withOpacity(0.05),
+          Colors.white.withValues(alpha: 0.1),
+          Colors.white.withValues(alpha: 0.0),
+          Colors.black.withValues(alpha: 0.05),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
@@ -360,7 +360,7 @@ class StudioReflectionPainter extends CustomPainter {
     
     // Add a light streak
     final streakPaint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = Colors.white.withValues(alpha: 0.05)
       ..style = PaintingStyle.fill;
     
     final path = Path()

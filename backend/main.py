@@ -93,6 +93,23 @@ async def analyze_product(
         user_material = material if material else "Özel Malzeme"
         user_desc = description if description else "Kaliteli ve şık bir tasarım."
         
+        # Dinamik Fiyatlandırma Motoru (Mock/Sunum Modu için)
+        cat_prices = {
+            'Çanta & Cüzdan': ('1,200.00 TL - 2,400.00 TL', '45.00 USD - 85.00 USD'),
+            'Giyim & Moda': ('850.00 TL - 1,950.00 TL', '35.00 USD - 75.00 USD'),
+            'Ayakkabı': ('1,800.00 TL - 3,800.00 TL', '65.00 USD - 140.00 USD'),
+            'Takı & Aksesuar': ('350.00 TL - 950.00 TL', '15.00 USD - 40.00 USD'),
+            'Teknoloji Aksesuarları (iPad Kılıfı vb.)': ('750.00 TL - 1,600.00 TL', '28.00 USD - 60.00 USD'),
+            'Ev & Yaşam': ('900.00 TL - 2,800.00 TL', '35.00 USD - 100.00 USD'),
+            'Dekorasyon & Sanat': ('1,500.00 TL - 5,500.00 TL', '55.00 USD - 200.00 USD'),
+            'Mutfak Gereçleri': ('450.00 TL - 1,400.00 TL', '18.00 USD - 50.00 USD'),
+            'Kozmetik & Kişisel Bakım': ('300.00 TL - 850.00 TL', '12.00 USD - 32.00 USD'),
+            'Hobi & Oyuncak': ('400.00 TL - 1,200.00 TL', '15.00 USD - 45.00 USD'),
+            'Diğer': ('500.00 TL - 1,500.00 TL', '20.00 USD - 60.00 USD')
+        }
+        
+        tr_price, global_price = cat_prices.get(category if category else 'Diğer', ('600.00 TL - 1,800.00 TL', '25.00 USD - 70.00 USD'))
+
         return JSONResponse(
             status_code=200,
             content={
@@ -101,13 +118,15 @@ async def analyze_product(
                 'data': {
                     "baslik": f"{user_material} {user_category} (Simüle Edildi)",
                     "export_strategy": {
+                        "marketing_hook": f"Handcrafted with love — meet the {user_material} {user_category} that tells your story. ✨",
+                        "suggested_social_media_post": f"✨ Introducing our stunning handmade {user_category} crafted from premium {user_material}! 🎨\n\nEvery piece tells a story of tradition, skill, and artistry passed down through generations. Perfect as a gift or a treat for yourself! 🛍️\n\n{user_desc[:80]}...\n\n#Handmade #Artisan #TurkishCraft #{user_material.replace(' ', '')} #{user_category.replace(' ', '')} #EtsySeller #ShopSmall #MadeWithLove #UniqueGifts #HandcraftedGoods #ArtisanMade #BuyArtisan #SlowFashion",
                         "urun_pozisyonlandirma": {
                             "benzersiz_deger_oneri": f"{user_material} kullanılarak üretilen bu {user_category}, {user_desc[:50]}... vizyonuyla fark yaratıyor.",
                             "hedef_pazar_segmenti": f"Premium {user_category} ve {user_material} ürünlerine ilgi duyan kitle."
                         },
                         "fiyatlandirma_stratejisi": {
-                            "tr_fiyat_tl": "950.00 TL - 1450.00 TL",
-                            "global_fiyat_usd": "55.00 USD - 85.00 USD"
+                            "tr_fiyat_tl": tr_price,
+                            "global_fiyat_usd": global_price
                         },
                         "pazar_ve_seo": {
                             "tr_stratejisi": {
@@ -121,7 +140,7 @@ async def analyze_product(
                         },
                         "pazarlama_ve_icerik": {
                             "urun_aciklamasi_tr": f"{user_material} malzemeden titizlikle üretilmiş bu {user_category}, {user_desc}. Zanaatkar ellerden çıkan bu parça, hem dayanıklılığı hem de estetiği bir arada sunuyor.",
-                            "urun_aciklamasi_en": f"This {user_category} is meticulously crafted from {user_material}, {user_desc}. This piece from artisan hands offers both durability and aesthetics together.",
+                            "urun_aciklamasi_en": f"This {user_category} is meticulously crafted from {user_material}. {user_desc} This piece from artisan hands offers both durability and aesthetics together.",
                             "ana_mesajlar": [
                                 f"Yüksek kaliteli {user_material} kalitesi.",
                                 f"Özgün {user_category} tasarımı ve el emeği.",

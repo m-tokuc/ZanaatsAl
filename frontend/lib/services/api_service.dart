@@ -9,6 +9,20 @@ class ApiService {
   // Eğer web uygulaması localhost'ta çalışıyorsa yerel backend'e bağlansın.
   // Değilse ngrok bağlantısına yönlensin.
   static String get _baseUrl {
+    if (kIsWeb) {
+      if (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1') {
+        return 'http://localhost:8000';
+      }
+    } else {
+      // Android emülatörü host makinenin localhost'una 10.0.2.2 üzerinden erişir
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        return 'http://10.0.2.2:8000';
+      }
+      // iOS simülatörü veya macOS desktop için localhost kullanılabilir
+      if (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS) {
+        return 'http://localhost:8000';
+      }
+    }
     return 'https://contemptibly-septemviral-apollo.ngrok-free.dev';
   }
 

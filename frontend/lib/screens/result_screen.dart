@@ -100,7 +100,7 @@ class _ResultScreenState extends State<ResultScreen> {
         border: Border.all(color: const Color(0xFF2E332F), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -114,7 +114,7 @@ class _ResultScreenState extends State<ResultScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.15),
+                  color: iconColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: iconColor, size: 24),
@@ -198,7 +198,7 @@ class _ResultScreenState extends State<ResultScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          const Color(0xFF0A0E0B).withOpacity(0.8),
+                          const Color(0xFF0A0E0B).withValues(alpha: 0.8),
                           const Color(0xFF0A0E0B),
                         ],
                         stops: const [0.4, 0.8, 1.0],
@@ -356,7 +356,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF151916),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF4CAF50).withOpacity(0.5)),
+                      border: Border.all(color: const Color(0xFF4CAF50).withValues(alpha: 0.5)),
                     ),
                     child: Material(
                       color: Colors.transparent,
@@ -393,12 +393,12 @@ class _ResultScreenState extends State<ResultScreen> {
                       ),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: const Color(0xFF7B2FF7).withOpacity(0.6),
+                        color: const Color(0xFF7B2FF7).withValues(alpha: 0.6),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF7B2FF7).withOpacity(0.35),
+                          color: const Color(0xFF7B2FF7).withValues(alpha: 0.35),
                           blurRadius: 20,
                           spreadRadius: 0,
                           offset: const Offset(0, 8),
@@ -409,7 +409,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(18),
-                        splashColor: const Color(0xFF7B2FF7).withOpacity(0.3),
+                        splashColor: const Color(0xFF7B2FF7).withValues(alpha: 0.3),
                         onTap: () {
                           Navigator.push(
                             context,

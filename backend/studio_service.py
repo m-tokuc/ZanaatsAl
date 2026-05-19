@@ -197,12 +197,24 @@ class StudioAIService:
 
         prompt = _build_inpainting_prompt(bg_type)
 
-        try:
-            response = self.vision_model.generate_content([
+        import concurrent.futures
+
+        def _call_gemini():
+            return self.vision_model.generate_content([
                 prompt,
                 {"mime_type": "image/jpeg",
                  "data": base64.b64encode(img_bytes).decode("utf-8")},
             ])
+
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(_call_gemini)
+                try:
+                    response = future.result(timeout=30)  # 30s timeout — ağ sorunlarına karşı
+                except concurrent.futures.TimeoutError:
+                    logger.warning("⚠️ Gemini 30s timeout → profesyonel fallback")
+                    return self._professional_composite(transparent_img, bg_type)
+
             if response.candidates:
                 for cand in response.candidates:
                     for part in cand.content.parts:
