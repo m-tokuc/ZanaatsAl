@@ -185,8 +185,8 @@ async def analyze_product(
         
         # Profesyonel Türkçe binlik ayraçlı formatlama (Örn: 1.200 TL)
         tr_price = f"{tl_low:,} TL - {tl_high:,} TL".replace(",", ".")
-        # Profesyonel İngilizce binlik ayraçlı formatlama (Örn: 1,200 USD)
-        global_price = f"{usd_low:,} USD - {usd_high:,} USD"
+        # Profesyonel Türkçe binlik ayraçlı Global Fiyat (Örn: 1.200 USD)
+        global_price = f"{usd_low:,} USD - {usd_high:,} USD".replace(",", ".")
 
         return JSONResponse(
             status_code=200,
@@ -196,8 +196,8 @@ async def analyze_product(
                 'data': {
                     "baslik": f"{user_material} {user_category} (Simüle Edildi)",
                     "export_strategy": {
-                        "marketing_hook": f"Handcrafted with love — meet the {user_material} {user_category} that tells your story. ✨",
-                        "suggested_social_media_post": f"✨ Introducing our stunning handmade {user_category} crafted from premium {user_material}! 🎨\n\nEvery piece tells a story of tradition, skill, and artistry passed down through generations. Perfect as a gift or a treat for yourself! 🛍️\n\n{user_desc[:80]}...\n\n#Handmade #Artisan #TurkishCraft #{user_material.replace(' ', '')} #{user_category.replace(' ', '')} #EtsySeller #ShopSmall #MadeWithLove #UniqueGifts #HandcraftedGoods #ArtisanMade #BuyArtisan #SlowFashion",
+                        "marketing_hook": f"Sevgiyle ve el emeğiyle üretildi — hikayenizi anlatan benzersiz {user_material} {user_category}. ✨",
+                        "suggested_social_media_post": f"✨ Birinci sınıf {user_material} malzemeden üretilen göz alıcı el yapımı {user_category} ile tanışın! 🎨\n\nHer detayında nesillerden nesillere aktarılan geleneksel zanaatın, sevginin ve emeğin hikayesi saklı. Kendiniz veya sevdikleriniz için eşsiz bir hediye! 🛍️\n\n{user_desc[:80]}...\n\n#ElYapimi #Zanaat #Tasarim #TurkZanaati #{user_material.replace(' ', '')} #{user_category.replace(' ', '')} #YerliUretim #Koleksiyon #Girisimci #Zanaatkar #OzelTasarim",
                         "urun_pozisyonlandirma": {
                             "benzersiz_deger_oneri": f"{user_material} kullanılarak üretilen bu {user_category}, {user_desc[:50]}... vizyonuyla fark yaratıyor.",
                             "hedef_pazar_segmenti": f"Premium {user_category} ve {user_material} ürünlerine ilgi duyan kitle."
@@ -209,16 +209,16 @@ async def analyze_product(
                         "pazar_ve_seo": {
                             "tr_stratejisi": {
                                 "platformlar": ["Trendyol", "Shopier", "Hepsiburada"],
-                                "seo_kelimeleri": f"{user_category}, {user_material}, el yapımı, tasarım"
+                                "seo_kelimeleri": f"{user_category}, {user_material}, el yapımı, tasarım, yerli zanaat"
                             },
                             "global_strateji": {
-                                "platformlar": ["Etsy", "Amazon Handmade", "Shopify"],
-                                "seo_kelimeleri": f"Handmade {user_category}, {user_material} gift, artisan {user_category}"
+                                "platformlar": ["Etsy Global", "Amazon Handmade", "Shopify"],
+                                "seo_kelimeleri": f"El yapımı {user_category}, {user_material} hediye, zanaatkar {user_category}, tasarım"
                             }
                         },
                         "pazarlama_ve_icerik": {
                             "urun_aciklamasi_tr": f"{user_material} malzemeden titizlikle üretilmiş bu {user_category}, {user_desc}. Zanaatkar ellerden çıkan bu parça, hem dayanıklılığı hem de estetiği bir arada sunuyor.",
-                            "urun_aciklamasi_en": f"This {user_category} is meticulously crafted from {user_material}. {user_desc} This piece from artisan hands offers both durability and aesthetics together.",
+                            "urun_aciklamasi_en": f"{user_material} malzemeden titizlikle üretilmiş bu {user_category}, {user_desc}. Zanaatkar ellerden çıkan bu parça, hem dayanıklılığı hem de estetiği bir arada sunuyor.",
                             "ana_mesajlar": [
                                 f"Yüksek kaliteli {user_material} kalitesi.",
                                 f"Özgün {user_category} tasarımı ve el emeği.",
