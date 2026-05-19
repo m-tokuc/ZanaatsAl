@@ -1,20 +1,35 @@
-<<<<<<< HEAD
-# flutter_application_1
+# ZanaatsAl 🚀
 
-A new Flutter project.
+ZanaatsAl, yerel üreticilerin, zanaatkarların ve el emeğiyle üretim yapanların e-ihracat süreçlerini tek bir ekrandan yönetebilmesi için geliştirilmiş yapay zeka destekli bir mobil asistandır. 
 
-## Getting Started
+Amacımız; ürün fotoğrafı çekiminden pazar analizine ve dil bariyerine kadar uzanan zorlu operasyonları otonom hale getirerek, üreticinin sadece üretmeye odaklanmasını sağlamaktır.
 
-This project is a starting point for a Flutter application.
+## ✨ Temel Özellikler
 
-A few resources to get you started if this is your first Flutter project:
+* **🎨 AI Sanal Stüdyo:** Amatör çekilmiş ürün fotoğraflarının arka planı temizlenir. Yapay zeka ile ürünler profesyonel stüdyo konseptlerine (mermer, ahşap vb.) yerleştirilir. Işık (relighting) ve zemin gölgeleri hesaplanarak görseldeki yapaylık tamamen giderilir.
+* **💰 Otonom Pazar Analizi:** Ürün görseli üzerinden analiz yapılarak Etsy ve Amazon gibi global platformlar taranır. Rakip analizleriyle birlikte Türkiye ve Global pazar için optimum satış fiyatı önerilir.
+* **✍️ Native SEO & Metin Optimizasyonu:** Türkçe girilen kısa ürün bilgileri, doğrudan Amerikan e-ticaret pazarına uygun (native), akıcı ve SEO odaklı İngilizce satış metinlerine dönüştürülür. Robotik çeviriler kullanılmaz.
+* **📱 Sosyal Medya Ajanı (Agentic):** Satışa hazır ürün için trend İngilizce hashtag'leri barındıran, paylaşıma hazır sosyal medya postları tek tıkla üretilir.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## 🛠️ Teknolojik Altyapı (Monorepo)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Projemiz `frontend` ve `backend` olarak iki ana yapıdan oluşmaktadır.
 
+* **Frontend:** Flutter & Dart (Mobil Uygulama Arayüzü)
+* **Backend:** Python, FastAPI (Yapay Zeka ve API Yönetimi)
+* **AI Entegrasyonları:** Gemini (Metin ve Fiyatlandırma), Serper.dev (Market Research), Stable Diffusion / Image Processing (Görsel İşleme ve Gölgelendirme)
 
+## 🚀 Kurulum ve Çalıştırma
+
+Projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımları izleyebilirsiniz.
+
+### 1. Backend (Python/FastAPI)
+```bash
+cd backend
+# Gerekli kütüphaneleri yükleyin
+pip install -r requirements.txt
+
+# .env dosyanızı oluşturup gerekli API anahtarlarını (Gemini, Serper vb.) girin.
+
+# Sunucuyu başlatın
+python main.py
